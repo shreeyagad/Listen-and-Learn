@@ -5,10 +5,6 @@ from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
 project_name = "Listen & Learn - Podcast Recommendation Engine"
 names = [
     "Kevin Cook: kjc244",
-    "Shreeya Gad: sg988",
-    "Justin Li: jl2588",
-    "Nicholas Rahardja: nmr73",
-    "Mohammed Ullah: mu83",
 ]
 
 
