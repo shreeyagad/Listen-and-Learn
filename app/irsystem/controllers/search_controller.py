@@ -3,9 +3,7 @@ from app.irsystem.models.helpers import *
 from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
 
 project_name = "Listen & Learn - Podcast Recommendation Engine"
-names = [
-    "Kevin Cook: kjc244",
-]
+names = ["Kevin Cook: kjc244", "Test: test"]
 
 
 @irsystem.route("/", methods=["GET"])
