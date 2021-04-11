@@ -9,6 +9,8 @@ class Config(object):
   CSRF_SESSION_KEY = "secret"
   SECRET_KEY = "not_this"
   SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
+  SPOTIFY_CLIENT_ID = os.environ.get("SPOTIFY_CLIENT_ID")
+  SPOTIFY_CLIENT_SECRET = os.environ.get("SPOTIFY_CLIENT_SECRET")
 
 class ProductionConfig(Config):
   DEBUG = False
