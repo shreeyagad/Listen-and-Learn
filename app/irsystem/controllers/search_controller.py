@@ -10,11 +10,11 @@ names = ["Kevin Cook: kjc244", "Nicholas Rahardja: nmr73", "Justin Li: jl2588", 
 def search():
     search_object = {
         "query": request.args.get("query"),
-        "release_date": request.args.get("release_date"),
+        "language": request.args.get("language"),
         "duration": request.args.get("duration"),
         "genre": request.args.get("genre"),
-        "language": request.args.get("language"),
-        "publisher": request.args.get("publisher")
+        "publisher": request.args.get("publisher"),
+        "year_published": request.args.get("year_published")
     }
 
     if not request.args.get("query"):
@@ -34,11 +34,37 @@ def search():
 def get_ranked_episodes(query):
     episodes = np.load('episodes.npy', allow_pickle='TRUE').item()
 
-    # filter by user preferences
+    # Each episode has the following structure: {
+    #   "id": str,
+    #   "show_id": str,
+    #   "name": str,
+    #   "description": str,
+    #   "duration_ms": int,
+    #   "genre": str,
+    #   "languages": list[str],
+    #   "publisher": str,
+    #   "release_date: str,
+    #   "release_date_precision": str,
+    #   "show_rank": int
+    # }
 
-    # then conduct cosine similarity between episode descriptions and user query
+    # The keys are the same as the attributes of the SimplifiedEpisodeObject in the Spotify API.
+    # See link for details: https://developer.spotify.com/documentation/web-api/reference/#object-simplifiedepisodeobject
 
-    # return list of ranked results
+    # The search_object has the following structure: {
+    #     "query": str (required),
+    #     "language": str (required),
+    #     "duration": int (optional),
+    #     "genre": str (optional),
+    #     "publisher": str (optional),
+    #     "year_published": int (optional)
+    # }
 
-    return ["Podcast 1", "Podcast 2"]
+    # Filter out episodes that do not match the parameters (except for "query")
+
+    # Conduct cosine similarity between episode description and "query", for each episode
+
+    # Return list of ranked results
+
+    return ["NOT_IMPLEMENTED"]
 
