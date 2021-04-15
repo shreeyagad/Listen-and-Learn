@@ -10,7 +10,6 @@ names = ["Kevin Cook: kjc244", "Nicholas Rahardja: nmr73", "Justin Li: jl2588", 
 def search():
     search_object = {
         "query": request.args.get("query"),
-        "language": request.args.get("language"),
         "duration": request.args.get("duration"),
         "genre": request.args.get("genre"),
         "publisher": request.args.get("publisher"),
@@ -32,7 +31,7 @@ def search():
     )
 
 def get_ranked_episodes(query):
-    episodes = np.load('episodes.npy', allow_pickle='TRUE').item()
+    episodes = np.load('data/episodes.npy', allow_pickle='TRUE').item()
     ranked_episodes = []
 
     # DUMMY CODE that returns first 5 episodes
@@ -48,10 +47,8 @@ def get_ranked_episodes(query):
     #   "description": str,
     #   "duration_ms": int,
     #   "genre": str,
-    #   "languages": list[str],
     #   "publisher": str,
     #   "release_date: str,
-    #   "release_date_precision": str,
     #   "show_rank": int
     # }
 
@@ -60,18 +57,16 @@ def get_ranked_episodes(query):
 
     # The search_object has the following structure: {
     #     "query": str (required),
-    #     "language": str (required),
     #     "duration": int (optional),
-    #     "genre": str (optional),
+    #     "genre": list[str] (optional),
     #     "publisher": str (optional),
     #     "year_published": int (optional)
     # }
 
-    # Filter out episodes that do not match the parameters (except for "query")
+    # TODO: Filter out episodes that do not match the parameters (except for "query")
 
-    # Conduct cosine similarity between episode description and "query", for each episode
+    # TODO: Conduct cosine similarity between episode description and "query", for each episode
 
     # Return list of ranked results
-
     return ranked_episodes
 

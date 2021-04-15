@@ -1,12 +1,13 @@
-import spotipy
 import collections
 import numpy as np
+import os
 import requests
 from bs4 import BeautifulSoup
+import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
-sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id="c0c231a63aff41459ff8db2c552830d2",
-client_secret="ca92f9689fd745219c252148f81f4ac2"))
+sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=os.environ.get('SPOTIFY_CLIENT_ID'),
+client_secret=os.environ.get('SPOTIFY_CLIENT_SECRET')))
 
 
 ## Use Chartable & BeautifulSoup to get top (podcast) shows on Spotify
@@ -75,38 +76,39 @@ def load_shows_from_chartable(chart_urls):
     i = 0
     while i != -1:
         i = collect_shows(range(i, num_urls))
-    np.save('chartable_genres_to_shows.npy', genres_to_shows) 
+    np.save('data/chartable_genres_to_shows.npy', genres_to_shows) 
 
 
 # Get all shows
 def get_all_shows():
     shows = dict()
-    genres_to_shows = np.load('chartable_genres_to_shows.npy', allow_pickle='TRUE').item()
+    genres_to_shows = np.load('data/chartable_genres_to_shows.npy', allow_pickle='TRUE').item()
     for genre, show_data in genres_to_shows.items():
         for show in show_data:
             try: 
                 show_name, rank = show['show_name'], show['rank']
                 results = sp.search(q=show_name, type='show', market='US')
                 show = results['shows']['items'][0]
-                new_show = {
-                    "id": show['id'],
-                    "name": show['name'],
-                    "description": show['description'],
-                    "genre": genre,
-                    "languages": show['languages'],
-                    "publisher": show['publisher'],
-                    "show_rank": rank
-                }
-                shows[new_show['id']] = new_show
+                if (show['languages'] == ['en'] or show['languages'] == ['en-US']):
+                    new_show = {
+                        "id": show['id'],
+                        "name": show['name'],
+                        "description": show['description'],
+                        "genre": genre,
+                        "languages": show['languages'],
+                        "publisher": show['publisher'],
+                        "show_rank": rank
+                    }
+                    shows[new_show['id']] = new_show
             except:
                 continue
-    np.save('shows.npy', shows) 
+    np.save('data/shows.npy', shows) 
 
 
 # GET ALL EPISODES
 def get_all_episodes():
     episodes = dict()
-    shows = np.load('shows.npy', allow_pickle='TRUE').item()
+    shows = np.load('data/shows.npy', allow_pickle='TRUE').item()
     for show_id in shows.keys():
         try: 
             results = sp.show_episodes(show_id, limit=50, offset=0, market='US')
@@ -119,19 +121,20 @@ def get_all_episodes():
                     "description": episode['description'],
                     "duration_ms": episode['duration_ms'],
                     "genre": shows[show_id]['genre'],
-                    "languages": episode['languages'],
                     "publisher": shows[show_id]['publisher'],
                     "release_date": episode['release_date'],
-                    "release_date_precision": episode['release_date_precision'],
                     "show_rank": shows[show_id]['show_rank']
                 }
                 episodes[episode['id']] = new_episode
         except:
             continue
 
-    np.save('episodes.npy', episodes) 
+    np.save('data/episodes.npy', episodes) 
 
 
 if __name__ == "__main__":
-    # episodes = np.load('episodes.npy',allow_pickle='TRUE').item()
-    pass
+    shows = np.load('data/shows.npy', allow_pickle='TRUE').item()
+    episodes = np.load('data/episodes.npy', allow_pickle='TRUE').item()
+    print(f"There are {len(shows)} shows and {len(episodes)} episodes in our dataset.")
+
+    # TODO: Create TFIDF vector representations of episode descriptions
