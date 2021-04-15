@@ -33,6 +33,13 @@ def search():
 
 def get_ranked_episodes(query):
     episodes = np.load('episodes.npy', allow_pickle='TRUE').item()
+    ranked_episodes = []
+
+    # DUMMY CODE that returns first 5 episodes
+    episode_values = episodes.values()
+    ep_iterator = iter(episode_values)
+    for i in range(5):
+        ranked_episodes.append(next(ep_iterator)['name'])
 
     # Each episode has the following structure: {
     #   "id": str,
@@ -66,5 +73,5 @@ def get_ranked_episodes(query):
 
     # Return list of ranked results
 
-    return ["NOT_IMPLEMENTED"]
+    return ranked_episodes
 
