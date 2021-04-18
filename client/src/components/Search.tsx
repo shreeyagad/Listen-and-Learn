@@ -3,6 +3,11 @@ import TextField from "@material-ui/core/TextField";
 import { makeStyles } from "@material-ui/core/styles";
 import SearchIcon from "@material-ui/icons/Search";
 
+export interface SearchProps {
+  query: string;
+  setQuery: (val: string) => void;
+}
+
 const useStyles = makeStyles({
   icon: {
     color: "white",
@@ -24,7 +29,7 @@ const inputStyles = {
   },
 };
 
-export const Search = () => {
+export const Search = ({ query, setQuery }: SearchProps) => {
   const classes = useStyles();
 
   return (
@@ -34,6 +39,8 @@ export const Search = () => {
         fullWidth
         margin="normal"
         placeholder="Enter a query..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
         InputProps={inputStyles}
       />
     </div>

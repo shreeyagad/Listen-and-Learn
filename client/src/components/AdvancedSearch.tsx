@@ -10,6 +10,15 @@ import { KeyboardTimePicker, KeyboardDatePicker } from "@material-ui/pickers";
 import { makeStyles } from "@material-ui/core/styles";
 import { ChipPicker } from "./ChipPicker";
 
+export interface AdvancedSearchProps {
+  searchCallback: (
+    duration: Date | null,
+    genres: Array<string>,
+    publisher: string | null,
+    year: Date | null
+  ) => void;
+}
+
 const genreList = [
   "Arts & Entertainment",
   "Business & Technology",
@@ -45,7 +54,7 @@ const useStyles = makeStyles({
   },
 });
 
-export const AdvancedSearch = () => {
+export const AdvancedSearch = ({ searchCallback }: AdvancedSearchProps) => {
   const classes = useStyles();
   const [duration, setDuration] = useState<Date | null>(null);
   const [genres, setGenres] = useState<Array<string>>([]);
@@ -103,7 +112,11 @@ export const AdvancedSearch = () => {
         </Grid>
       </CardContent>
       <CardActions className={classes.actions}>
-        <Button>Search</Button>
+        <Button
+          onClick={() => searchCallback(duration, genres, publisher, year)}
+        >
+          Search
+        </Button>
         <Button onClick={resetFields}>Reset</Button>
       </CardActions>
     </Card>

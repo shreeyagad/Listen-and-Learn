@@ -22,33 +22,31 @@ names = ["Kevin Cook: kjc244", "Nicholas Rahardja: nmr73",
 #                                allow_pickle='TRUE')
 
 @irsystem.route("/", methods=["GET"])
-def search():
+def index():
     return render_template("index.html")
 
-# @irsystem.route("/", methods=["GET"])
-# def search():
-#     search_object = {
-#         "query": request.args.get("query"),
-#         "duration": request.args.get("duration"),
-#         "genre": request.args.get("genre"),
-#         "publisher": request.args.get("publisher"),
-#         "year_published": request.args.get("year_published")
-#     }
+@irsystem.route("/search", methods=["POST"])
+def search():
+    search_object = {
+        "query": request.json.get("query"),
+        "duration": request.json.get("duration"),
+        "genre": request.json.get("genres"),
+        "publisher": request.json.get("publisher"),
+        "year_published": request.json.get("year")
+    }
 
-#     if not request.args.get("query"):
-#         data = []
-#         output_message = ""
-#     else:
-#         data = get_ranked_episodes(search_object)
-#         output_message = "Your recommended podcasts: "
-#     return render_template(
-#         "search.html",
-#         project=project_name,
-#         names=names,
-#         output_message=output_message,
-#         data=data,
-#     )
+    return jsonify(get_first_5_episodes())
+    
 
+def get_first_5_episodes():
+    episodes = np.load('data/episodes.npy',
+                       allow_pickle='TRUE').item()
+    ranked_episodes = []
+    episode_values = episodes.values()
+    ep_iterator = iter(episode_values)
+    for i in range(5):
+        ranked_episodes.append(next(ep_iterator))
+    return ranked_episodes
 
 def filter_helper(genre, duration, year, publisher):
     filtered_episodes = []

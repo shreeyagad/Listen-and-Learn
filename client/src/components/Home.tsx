@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import Container from "@material-ui/core/Container";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import { Bar } from "./Bar";
 import { Search } from "./Search";
 import { AdvancedSearch } from "./AdvancedSearch";
+import { ResultsTable } from "./ResultsTable";
+import { searchPodcasts, ResponseObject } from "api";
 import BackgroundImage from "images/podcast.jpg";
 
 const useStyles = makeStyles({
@@ -29,6 +31,25 @@ const useStyles = makeStyles({
 
 export const Home = () => {
   const classes = useStyles();
+  const [query, setQuery] = useState("");
+  const [dataResults, setData] = useState<Array<ResponseObject> | null>(null);
+
+  const searchCallback = async (
+    duration: Date | null,
+    genres: Array<string>,
+    publisher: string | null,
+    year: Date | null
+  ) => {
+    const results = await searchPodcasts(
+      query,
+      duration,
+      genres,
+      publisher,
+      year
+    );
+    setData(results);
+  };
+
   return (
     <Container>
       <div className={`${classes.layer} ${classes.overlay}`}>
@@ -36,10 +57,13 @@ export const Home = () => {
           <Typography variant="h1">Spotify Podcast Search</Typography>
         </Bar>
         <Bar barHeight={25}>
-          <Search />
+          <Search query={query} setQuery={setQuery} />
         </Bar>
         <Bar barHeight={25}>
-          <AdvancedSearch />
+          <AdvancedSearch searchCallback={searchCallback} />
+        </Bar>
+        <Bar barHeight={25}>
+          {dataResults && <ResultsTable results={dataResults} />}
         </Bar>
       </div>
       <div className={`${classes.layer} ${classes.background}`} />
