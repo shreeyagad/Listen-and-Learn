@@ -1,6 +1,6 @@
-# from . import *
-# from app.irsystem.models.helpers import *
-# from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
+from . import *
+from app.irsystem.models.helpers import *
+from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -8,18 +8,18 @@ from sklearn.metrics.pairwise import cosine_similarity
 project_name = "Listen & Learn - Podcast Recommendation Engine"
 names = ["Kevin Cook: kjc244", "Nicholas Rahardja: nmr73",
          "Justin Li: jl2588", "Shreeya Gad: sg988", "Mohammed Ullah: mu83"]
-episodes_desc_tf_idf = np.load('../../../data/tf_idf_description.npy',
-                               allow_pickle='TRUE')
-episodes_desc_idf = np.load('../../../data/idf_description.npy',
-                            allow_pickle='TRUE')
-episodes_desc_terms = np.load('../../../data/terms_description.npy',
-                              allow_pickle='TRUE')
-episode_title_tf_idf = np.load('../../../data/tf_idf_name.npy',
-                               allow_pickle='TRUE')
-episodes_title_idf = np.load('../../../data/idf_name.npy',
-                             allow_pickle='TRUE')
-episodes_title_terms = np.load('../../../data/terms_name.npy',
-                               allow_pickle='TRUE')
+# episodes_desc_tf_idf = np.load('../../../data/tf_idf_description.npy',
+#                                allow_pickle='TRUE')
+# episodes_desc_idf = np.load('../../../data/idf_description.npy',
+#                             allow_pickle='TRUE')
+# episodes_desc_terms = np.load('../../../data/terms_description.npy',
+#                               allow_pickle='TRUE')
+# episode_title_tf_idf = np.load('../../../data/tf_idf_name.npy',
+#                                allow_pickle='TRUE')
+# episodes_title_idf = np.load('../../../data/idf_name.npy',
+#                              allow_pickle='TRUE')
+# episodes_title_terms = np.load('../../../data/terms_name.npy',
+#                                allow_pickle='TRUE')
 
 @irsystem.route("/", methods=["GET"])
 def search():
