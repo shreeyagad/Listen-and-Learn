@@ -5,40 +5,49 @@ import requests
 from bs4 import BeautifulSoup
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
+from sklearn.feature_extraction.text import TfidfVectorizer
+
 
 sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=os.environ.get('SPOTIFY_CLIENT_ID'),
-client_secret=os.environ.get('SPOTIFY_CLIENT_SECRET')))
+                                                           client_secret=os.environ.get('SPOTIFY_CLIENT_SECRET')))
 
 
-## Use Chartable & BeautifulSoup to get top (podcast) shows on Spotify
+# Use Chartable & BeautifulSoup to get top (podcast) shows on Spotify
 chartable_url = 'https://chartable.com/charts/spotify/us'
-page = requests.get(chartable_url, headers = {'User-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36'})
+page = requests.get(chartable_url, headers={
+                    'User-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36'})
 page_soup = BeautifulSoup(page.content, 'html.parser')
 charts_by_genre = page_soup.find_all('div', class_='podcast mb1')
 chart_urls = [chart.find('a')['href'] for chart in charts_by_genre]
-chart_urls = chart_urls[:-3] + [chart_urls[-1]] # remove "top podcasts" and "trending podcasts"
+# remove "top podcasts" and "trending podcasts"
+chart_urls = chart_urls[:-3] + [chart_urls[-1]]
 num_urls = len(chart_urls)
 
 
-## For each genre, append all of its page urls
+# For each genre, append all of its page urls
 def add_next_pages(chart_indices):
     for i in chart_indices:
         temp_chart_url = chart_urls[i]
         while temp_chart_url:
-            chart_page = requests.get(temp_chart_url, headers = {'User-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36'})
+            chart_page = requests.get(temp_chart_url, headers={
+                                      'User-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36'})
             if (chart_page.status_code != 200):
                 return i
-            next_page = BeautifulSoup(chart_page.content, 'html.parser').find('span', class_='next')
+            next_page = BeautifulSoup(
+                chart_page.content, 'html.parser').find('span', class_='next')
             if next_page:
-                temp_chart_url = 'http://chartable.com' + next_page.find('a')['href']
+                temp_chart_url = 'http://chartable.com' + \
+                    next_page.find('a')['href']
                 next_page_urls.append(temp_chart_url)
             else:
                 temp_chart_url = None
     return -1
 
 
-## Need to load data incrementally due to request limit
+# Need to load data incrementally due to request limit
 next_page_urls = []
+
+
 def load_next_pages():
     i = 0
     while i != -1:
@@ -46,11 +55,12 @@ def load_next_pages():
     chart_urls += next_page_urls
 
 
-## Get show titles using chart urls from Chartable
+# Get show titles using chart urls from Chartable
 def collect_shows(chart_indices):
     for i in chart_indices:
         chart_url = chart_urls[i]
-        chart_page = requests.get(chart_url, headers = {'User-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36'})
+        chart_page = requests.get(chart_url, headers={
+                                  'User-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36'})
         if (chart_page.status_code != 200):
             return i
 
@@ -66,26 +76,30 @@ def collect_shows(chart_indices):
             if not show_name:
                 show_name = show.find('div', class_='title f4')
             genre = key.split('?')[0]
-            genres_to_shows[genre].append({"show_name": show_name.text, "rank": show_rank.text})
+            genres_to_shows[genre].append(
+                {"show_name": show_name.text, "rank": show_rank.text})
     return -1
 
 
-## Need to load data incrementally due to request limit
+# Need to load data incrementally due to request limit
 genres_to_shows = collections.defaultdict(list)
+
+
 def load_shows_from_chartable(chart_urls):
     i = 0
     while i != -1:
         i = collect_shows(range(i, num_urls))
-    np.save('data/chartable_genres_to_shows.npy', genres_to_shows) 
+    np.save('data/chartable_genres_to_shows.npy', genres_to_shows)
 
 
 # Get all shows
 def get_all_shows():
     shows = dict()
-    genres_to_shows = np.load('data/chartable_genres_to_shows.npy', allow_pickle='TRUE').item()
+    genres_to_shows = np.load(
+        'data/chartable_genres_to_shows.npy', allow_pickle='TRUE').item()
     for genre, show_data in genres_to_shows.items():
         for show in show_data:
-            try: 
+            try:
                 show_name, rank = show['show_name'], show['rank']
                 results = sp.search(q=show_name, type='show', market='US')
                 show = results['shows']['items'][0]
@@ -102,7 +116,7 @@ def get_all_shows():
                     shows[new_show['id']] = new_show
             except:
                 continue
-    np.save('data/shows.npy', shows) 
+    np.save('data/shows.npy', shows)
 
 
 # GET ALL EPISODES
@@ -110,8 +124,9 @@ def get_all_episodes():
     episodes = dict()
     shows = np.load('data/shows.npy', allow_pickle='TRUE').item()
     for show_id in shows.keys():
-        try: 
-            results = sp.show_episodes(show_id, limit=50, offset=0, market='US')
+        try:
+            results = sp.show_episodes(
+                show_id, limit=50, offset=0, market='US')
             episode_items = results['items']
             for episode in episode_items:
                 new_episode = {
@@ -129,12 +144,42 @@ def get_all_episodes():
         except:
             continue
 
-    np.save('data/episodes.npy', episodes) 
+    np.save('data/episodes.npy', episodes)
+
+
+def get_tf_idf_vectors(category, max_df):
+    episodes = np.load('data/episodes.npy', allow_pickle='TRUE').item()
+    episodes_desc = [episodes[episode_id][category]
+                     for episode_id in episodes]
+    vectorizer = TfidfVectorizer(
+        stop_words='english', max_df=max_df)
+    mat = np.array(vectorizer.fit_transform(episodes_desc).toarray())
+    idf = np.array(vectorizer.idf_)
+    terms = np.array(vectorizer.get_feature_names())
+    file_name_tf_idf_vectors = 'data/tf_idf_{}.npy'.format(category)
+    file_name_idf = 'data/idf_{}.npy'.format(category)
+    file_name_terms = 'data/terms_{}.npy'.format(category)
+    np.save(file_name_tf_idf_vectors, mat)
+    np.save(file_name_idf, idf)
+    np.save(file_name_terms, terms)
+
+
+def filterDict(episodes):
+    genreDict = {}
+    for episode in episodes:
+        genre = episodes[episode]['genre']
+        if(genre not in genreDict):
+            genreDict[genre] = [episodes[episode]]
+        else:
+            genreDict[genre].append(episodes[episode])
+    np.save('data/genre_episodes.npy', genreDict)
 
 
 if __name__ == "__main__":
     shows = np.load('data/shows.npy', allow_pickle='TRUE').item()
     episodes = np.load('data/episodes.npy', allow_pickle='TRUE').item()
-    print(f"There are {len(shows)} shows and {len(episodes)} episodes in our dataset.")
+    print(
+        f"There are {len(shows)} shows and {len(episodes)} episodes in our dataset.")
 
-    # TODO: Create TFIDF vector representations of episode descriptions
+    get_tf_idf_vectors('description', 0.8)
+    get_tf_idf_vectors('name', 1.0)
