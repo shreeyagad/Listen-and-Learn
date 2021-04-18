@@ -7,6 +7,10 @@ names = ["Kevin Cook: kjc244", "Nicholas Rahardja: nmr73", "Justin Li: jl2588", 
 
 
 @irsystem.route("/", methods=["GET"])
+def index():
+    return render_template("index.html")
+
+@irsystem.route("/search", methods=["GET"])
 def search():
     search_object = {
         "query": request.args.get("query"),
