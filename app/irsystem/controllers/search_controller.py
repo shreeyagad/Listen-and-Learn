@@ -21,6 +21,10 @@ episodes_title_idf = np.load('../../../data/idf_name.npy',
 episodes_title_terms = np.load('../../../data/terms_name.npy',
                                allow_pickle='TRUE')
 
+@irsystem.route("/", methods=["GET"])
+def search():
+    return render_template("index.html")
+
 # @irsystem.route("/", methods=["GET"])
 # def search():
 #     search_object = {
