@@ -130,10 +130,10 @@ def get_all_episodes():
     for show_id in shows.keys():
         try:
             results = sp.show_episodes(
-                show_id, limit=20, offset=0, market='US')
+                show_id, limit=10, offset=0, market='US')
             episode_items = results['items']
             for episode in episode_items:
-                if len(episode['description']) >= 10:
+                if len(episode['description']) > 0:
                     new_episode = {
                         "id": episode['id'],
                         "show_id": show_id,
@@ -150,7 +150,6 @@ def get_all_episodes():
                     idx += 1
         except:
             continue
-
     with open('data/episodes.json', 'w') as json_file:
         json.dump(episodes, json_file)
 
@@ -187,9 +186,9 @@ def group_by_genre_dict(episodes):
 
 
 if __name__ == "__main__":
-    # load_shows_from_chartable(chart_urls)
-    # get_all_shows()
-    # get_all_episodes()
+    load_shows_from_chartable(chart_urls)
+    get_all_shows()
+    get_all_episodes()
     get_tf_idf_vectors('description', 0.8)
     with open('data/shows.json') as f:
         shows = json.load(f)
@@ -198,4 +197,4 @@ if __name__ == "__main__":
     group_by_genre_dict(episodes)
     with open('data/genre_episodes.json') as f:
         genre_episodes = json.load(f)
-    print(f"There are {len(shows)} shows and {len(episodes)} episodes.")
+    print(f"There are {len(shows)} shows, {len(episodes)} episodes, and {len(genre_episodes)} genres.")
