@@ -20,7 +20,8 @@ s3_bucket = s3.Bucket('cs4300-listen-and-learn-tf-idf-data')
 for s3_object in s3_bucket.objects.all():
     if (s3_object.key[-1] != '/'): # if not a folder
         filename = s3_object.key.split('/')[-1]
-        s3_bucket.download_file(s3_object.key, filename)
+        if filename[-9:][:4] != "name":
+            s3_bucket.download_file(s3_object.key, filename)
 
 # Load files
 with open("episode_id_to_idx.json") as f:
@@ -29,16 +30,16 @@ with open("genre_to_episodes.json") as f:
     genre_to_episodes = json.load(f)
 with open("terms_description.json") as f:
     terms_description = json.load(f)
-with open("terms_name.json") as f:
-    terms_name = json.load(f)
+# with open("terms_name.json") as f:
+#     terms_name = json.load(f)
 with open("idf_description.json") as f:
     idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding='utf8')
-with open("idf_name.json") as f:
-    idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding='utf8')
+# with open("idf_name.json") as f:
+#     idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding='utf8')
 with open("tf_idf_description.json") as f:
     tf_idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding='utf8')
-with open("tf_idf_name.json") as f:
-    tf_idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding='utf8')
+# with open("tf_idf_name.json") as f:
+#     tf_idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding='utf8')
 
 
 @irsystem.route("/", methods=["GET"])
