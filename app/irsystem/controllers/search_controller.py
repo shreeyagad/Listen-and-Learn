@@ -121,9 +121,9 @@ def get_ranked_episodes(query):
     query_vec_desc = episode_desc_vectorizer.fit_transform([query]).toarray().flatten()
     query_desc_tf_idf = query_vec_desc*idf_description[np.newaxis,:]
 
-    episode_name_vectorizer = CountVectorizer(vocabulary=terms_name)
-    query_vec_name = episode_name_vectorizer.fit_transform([query]).toarray().flatten()
-    query_name_tf_idf = query_vec_name*idf_name[np.newaxis,:]
+    # episode_name_vectorizer = CountVectorizer(vocabulary=terms_name)
+    # query_vec_name = episode_name_vectorizer.fit_transform([query]).toarray().flatten()
+    # query_name_tf_idf = query_vec_name*idf_name[np.newaxis,:]
 
     filtered_episodes_desc_tf_idf = tf_idf_description[filtered_episode_indices]
     episodes_desc_cos_sim = cosine_similarity(
