@@ -19,7 +19,8 @@ s3 = boto3.resource('s3', aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
 s3_bucket = s3.Bucket('cs4300-listen-and-learn-tf-idf-data')
 for s3_object in s3_bucket.objects.all():
     if (s3_object.key[-1] != '/'): # if not a folder
-        s3_bucket.download_file(s3_object.key, f"data/{s3_object.key}")
+        filename = s3_object.key.split('/')[-1]
+        s3_bucket.download_file(s3_object.key, filename)
 
 # Load files
 data = dict()
