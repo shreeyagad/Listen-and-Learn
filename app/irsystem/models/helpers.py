@@ -21,7 +21,7 @@ def http_errors(result):
 class NumpyEncoder(json.JSONEncoder):
 
     def default(self, obj):
-        """If input object is an ndarray it will be converted into a dict 
+        """If input object is an ndarray it will be converted into a dict
         holding dtype, shape and the data, base64 encoded.
         """
         if isinstance(obj, np.ndarray):
@@ -31,7 +31,7 @@ class NumpyEncoder(json.JSONEncoder):
                 cont_obj = np.ascontiguousarray(obj)
                 assert(cont_obj.flags['C_CONTIGUOUS'])
                 obj_data = cont_obj.data
-            data_b64 = base64.b64encode(obj_data)
+            data_b64 = base64.b64encode(obj_data).decode("utf8")
             return dict(__ndarray__=data_b64,
                         dtype=str(obj.dtype),
                         shape=obj.shape)

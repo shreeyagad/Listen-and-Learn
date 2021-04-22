@@ -1,13 +1,17 @@
 import collections
 import numpy as np
-import os
-import json
+from gevent import monkey
+monkey.patch_all()
 import requests
+import os
+import boto3
+import json
 from bs4 import BeautifulSoup
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from sklearn.feature_extraction.text import TfidfVectorizer
-
+from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
+from app.irsystem.models.helpers import json_numpy_obj_hook
 
 sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=os.environ.get('SPOTIFY_CLIENT_ID'),
                                                            client_secret=os.environ.get('SPOTIFY_CLIENT_SECRET')))
@@ -74,7 +78,8 @@ def collect_shows(chart_indices):
             show_rank = show.find('div', class_='b header-font f2 tc')
             if not show_name:
                 show_name = show.find('div', class_='title f4')
-            genre = key.split('?')[0]
+            genre = ' & '.join(key.split('?')[0].split()).title()
+            
             genres_to_shows[genre].append(
                 {"show_name": show_name.text, "rank": show_rank.text})
     return -1
@@ -86,16 +91,12 @@ def load_shows_from_chartable(chart_urls):
     i = 0
     while i != -1:
         i = collect_shows(range(i, num_urls))
-
-    with open('data/genres_to_shows.json', 'w') as json_file:
-        json.dump(genres_to_shows, json_file)
+    return genres_to_shows
 
 
 # Get all shows
-def get_all_shows():
+def get_all_shows(genres_to_shows):
     shows = dict()
-    with open('data/genres_to_shows.json') as f:
-        genres_to_shows = json.load(f)
     for genre, show_data in genres_to_shows.items():
         for show in show_data:
             try:
@@ -103,34 +104,33 @@ def get_all_shows():
                 results = sp.search(q=show_name, type='show', market='US')
                 show = results['shows']['items'][0]
                 if (show['languages'] == ['en'] or show['languages'] == ['en-US']):
-                    new_show = {
-                        "id": show['id'],
-                        "name": show['name'],
-                        "description": show['description'],
-                        "genre": genre,
-                        "languages": show['languages'],
-                        "publisher": show['publisher'],
-                        "show_rank": rank
-                    }
-                    shows[new_show['id']] = new_show
+                    if show['id'] in shows:
+                        shows[show['id']]['genres'].append(genre)
+                    else:
+                        new_show = {
+                            "id": show['id'],
+                            "name": show['name'],
+                            "description": show['description'],
+                            "genres": [genre],
+                            "languages": show['languages'],
+                            "publisher": show['publisher'],
+                            "show_rank": rank
+                        }
+                        shows[show['id']] = new_show
             except:
                 continue
-
-    with open('data/shows.json', 'w') as json_file:
-        json.dump(shows, json_file)
+    return shows
 
 
 # GET ALL EPISODES
-def get_all_episodes():
+def get_all_episodes(shows):
     episodes = dict()
     episode_id_to_idx = dict()
-    with open('data/shows.json') as f:
-        shows = json.load(f)
     idx = 0
     for show_id in shows.keys():
         try:
             results = sp.show_episodes(
-                show_id, limit=10, offset=0, market='US')
+                show_id, limit=20, offset=0, market='US')
             episode_items = results['items']
             for episode in episode_items:
                 if len(episode['description']) > 0:
@@ -140,7 +140,7 @@ def get_all_episodes():
                         "name": episode['name'],
                         "description": episode['description'],
                         "duration_ms": episode['duration_ms'],
-                        "genre": shows[show_id]['genre'],
+                        "genres": shows[show_id]['genres'],
                         "publisher": shows[show_id]['publisher'],
                         "release_date": episode['release_date'],
                         "show_rank": shows[show_id]['show_rank']
@@ -150,51 +150,48 @@ def get_all_episodes():
                     idx += 1
         except:
             continue
-    with open('data/episodes.json', 'w') as json_file:
-        json.dump(episodes, json_file)
-
-    with open('data/episode_id_to_idx.json', 'w') as json_file:
+    with open('data/episodes/episode_id_to_idx.json', 'w') as json_file:
         json.dump(episode_id_to_idx, json_file)
+    return episodes
 
 
-def get_tf_idf_vectors(category, max_df):
-    with open('data/episodes.json') as f:
-        episodes = json.load(f)
+def get_tf_idf_vectors(episodes, category, max_df):
     episodes_desc = [episodes[episode_id][category]
                      for episode_id in episodes]
     vectorizer = TfidfVectorizer(
-        stop_words='english', max_df=max_df)
-    mat = np.array(vectorizer.fit_transform(episodes_desc).toarray(), dtype=np.float32)
-    idf = np.array(vectorizer.idf_)
-    terms = np.array(vectorizer.get_feature_names())
-    file_name_tf_idf_vectors = 'data/tf_idf_{}.npy'.format(category)
-    file_name_idf = 'data/idf_{}.npy'.format(category)
-    file_name_terms = 'data/terms_{}.npy'.format(category)
-    np.save(file_name_tf_idf_vectors, mat)
-    np.save(file_name_idf, idf)
-    np.save(file_name_terms, terms)
+        stop_words='english', max_df=max_df, dtype=np.float32)
+    mat = np.array(vectorizer.fit_transform(episodes_desc).toarray())
+    idf = vectorizer.idf_
+    terms = vectorizer.get_feature_names()
+
+    file_name_tf_idf_vectors = 'data/tf_idf/tf_idf_{}.json'.format(category)
+    file_name_idf = 'data/idf/idf_{}.json'.format(category)
+    file_name_terms = 'data/terms/terms_{}.json'.format(category)
+
+    json.dump(mat, open(file_name_tf_idf_vectors, 'w'), cls=NumpyEncoder)
+    json.dump(idf, open(file_name_idf, 'w'), cls=NumpyEncoder)
+    with open(file_name_terms, 'w') as json_file:
+        json.dump(terms, json_file)
 
 
-def group_by_genre_dict(episodes):
-    genre_dict = collections.defaultdict(list)
+def group_by_genre(episodes):
+    genre_to_episodes = collections.defaultdict(list)
     for episode in episodes:
-        genre = episodes[episode]['genre']
-        genre_dict[genre].append(episodes[episode])
+        genres = episodes[episode]['genres']
+        for genre in genres:
+            genre_to_episodes[genre].append(episodes[episode])
     
-    with open('data/genre_episodes.json', 'w') as json_file:
-        json.dump(genre_dict, json_file)
+    with open('data/episodes/genre_to_episodes.json', 'w') as json_file:
+        json.dump(genre_to_episodes, json_file)
+    return genre_to_episodes
 
 
 if __name__ == "__main__":
-    load_shows_from_chartable(chart_urls)
-    get_all_shows()
-    get_all_episodes()
-    get_tf_idf_vectors('description', 0.8)
-    with open('data/shows.json') as f:
-        shows = json.load(f)
-    with open('data/episodes.json') as f:
-        episodes = json.load(f)
-    group_by_genre_dict(episodes)
-    with open('data/genre_episodes.json') as f:
-        genre_episodes = json.load(f)
-    print(f"There are {len(shows)} shows, {len(episodes)} episodes, and {len(genre_episodes)} genres.")
+    genres_to_shows = load_shows_from_chartable(chart_urls)
+    shows = get_all_shows(genres_to_shows)
+    episodes = get_all_episodes(shows)
+    get_tf_idf_vectors(episodes, 'description', 0.8)
+    get_tf_idf_vectors(episodes, 'name', 0.8)
+    genre_to_episodes = group_by_genre(episodes)
+    print(f"There are {len(shows)} shows and {len(episodes)} episodes.")
+    print(f"There are {len(genre_to_episodes)} genres: {genre_to_episodes.keys()}")
