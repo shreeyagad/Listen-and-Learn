@@ -130,7 +130,7 @@ def get_all_episodes(shows):
     for show_id in shows.keys():
         try:
             results = sp.show_episodes(
-                show_id, limit=20, offset=0, market='US')
+                show_id, limit=15, offset=0, market='US')
             episode_items = results['items']
             for episode in episode_items:
                 if len(episode['description']) > 0:
@@ -150,7 +150,7 @@ def get_all_episodes(shows):
                     idx += 1
         except:
             continue
-    with open('data/episodes/episode_id_to_idx.json', 'w') as json_file:
+    with open('episode_id_to_idx.json', 'w') as json_file:
         json.dump(episode_id_to_idx, json_file)
     return episodes
 
@@ -164,9 +164,9 @@ def get_tf_idf_vectors(episodes, category, max_df):
     idf = vectorizer.idf_
     terms = vectorizer.get_feature_names()
 
-    file_name_tf_idf_vectors = 'data/tf_idf/tf_idf_{}.json'.format(category)
-    file_name_idf = 'data/idf/idf_{}.json'.format(category)
-    file_name_terms = 'data/terms/terms_{}.json'.format(category)
+    file_name_tf_idf_vectors = 'tf_idf_{}.json'.format(category)
+    file_name_idf = 'idf_{}.json'.format(category)
+    file_name_terms = 'terms_{}.json'.format(category)
 
     json.dump(mat, open(file_name_tf_idf_vectors, 'w'), cls=NumpyEncoder)
     json.dump(idf, open(file_name_idf, 'w'), cls=NumpyEncoder)
@@ -181,7 +181,7 @@ def group_by_genre(episodes):
         for genre in genres:
             genre_to_episodes[genre].append(episodes[episode])
     
-    with open('data/episodes/genre_to_episodes.json', 'w') as json_file:
+    with open('genre_to_episodes.json', 'w') as json_file:
         json.dump(genre_to_episodes, json_file)
     return genre_to_episodes
 
