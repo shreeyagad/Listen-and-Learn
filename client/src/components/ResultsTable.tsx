@@ -38,7 +38,7 @@ export const ResultsTable = ({ results }: ResultsTableProps) => {
           <TableRow>
             <TableCell>Name</TableCell>
             <TableCell>Description</TableCell>
-            <TableCell>Genre</TableCell>
+            <TableCell>Genres</TableCell>
             <TableCell>Duration</TableCell>
             <TableCell>Year</TableCell>
           </TableRow>
@@ -50,7 +50,7 @@ export const ResultsTable = ({ results }: ResultsTableProps) => {
                 {row.name}
               </TableCell>
               <TableCell>{row.description}</TableCell>
-              <TableCell>{_.capitalize(row.genre)}</TableCell>
+              <TableCell>{row.genres.join(", ")}</TableCell>
               <TableCell>{getDurationString(row.duration_ms)}</TableCell>
               <TableCell>
                 {getYear(parse(row.release_date, "yyyy-MM-dd", new Date()))}

@@ -4,7 +4,7 @@ import format from "date-fns/format";
 export interface ResponseObject {
   description: string;
   duration_ms: number;
-  genre: string;
+  genres: Array<string>;
   id: string;
   name: string;
   publisher: string;
