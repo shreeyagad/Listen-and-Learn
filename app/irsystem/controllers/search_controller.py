@@ -23,15 +23,22 @@ for s3_object in s3_bucket.objects.all():
         s3_bucket.download_file(s3_object.key, filename)
 
 # Load files
-data = dict()
-for directory in os.listdir('data'):
-    for obj in os.listdir(f"data/{directory}"):
-        with open(f"data/{directory}/{obj}") as f:
-            obj_name = obj.split('.')[0]
-            if directory == 'tf_idf' or directory == 'idf': # if numpy arrays
-                data[obj_name] = json.load(f, object_hook=json_numpy_obj_hook, encoding='utf8')
-            else:
-                data[obj_name] = json.load(f)
+with open("episode_id_to_idx.json") as f:
+    episode_id_to_idx = json.load(f)
+with open("genre_to_episodes.json") as f:
+    genre_to_episodes = json.load(f)
+with open("terms_description.json") as f:
+    terms_description = json.load(f)
+with open("terms_name.json") as f:
+    terms_name = json.load(f)
+with open("idf_description.json") as f:
+    idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding='utf8')
+with open("idf_name.json") as f:
+    idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding='utf8')
+with open("tf_idf_description.json") as f:
+    tf_idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding='utf8')
+with open("tf_idf_name.json") as f:
+    tf_idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding='utf8')
 
 
 @irsystem.route("/", methods=["GET"])
@@ -54,7 +61,7 @@ def search():
 
 def filter_helper(genre, duration, year, publisher):
     filtered_episodes = []
-    episodes_by_genre = data["genre_to_episodes"][genre]
+    episodes_by_genre = genre_to_episodes[genre]
     for episode in episodes_by_genre:
         if ((duration == None or (abs(duration - episode['duration_ms']) < 0.1 * duration))
             and
@@ -100,24 +107,24 @@ def get_ranked_episodes(query):
         for g in genres:
             filtered_episodes += filter_helper(g, duration, year, publisher)
     else:
-        for g in data["genre_to_episodes"].keys():
+        for g in genre_to_episodes.keys():
             filtered_episodes += filter_helper(g, duration, year, publisher)
                     
     # List of tuples, each tuple contains the index of episode in episodes data set.
     # Used when calculating cosine similarity with the pre-computed tf-idf scores. 
-    filtered_episodes = [(data["episode_id_to_idx"][episode['id']], episode)
+    filtered_episodes = [(episode_id_to_idx[episode['id']], episode)
                          for episode in filtered_episodes]
     filtered_episode_indices = [episode[0] for episode in filtered_episodes]
 
-    episode_desc_vectorizer = CountVectorizer(vocabulary=data["terms_description"])
+    episode_desc_vectorizer = CountVectorizer(vocabulary=terms_description)
     query_vec_desc = episode_desc_vectorizer.fit_transform([query]).toarray().flatten()
-    query_desc_tf_idf = query_vec_desc*data["idf_description"][np.newaxis,:]
+    query_desc_tf_idf = query_vec_desc*idf_description[np.newaxis,:]
 
-    episode_name_vectorizer = CountVectorizer(vocabulary=data["terms_name"])
+    episode_name_vectorizer = CountVectorizer(vocabulary=terms_name)
     query_vec_name = episode_name_vectorizer.fit_transform([query]).toarray().flatten()
-    query_name_tf_idf = query_vec_name*data["idf_name"][np.newaxis,:]
+    query_name_tf_idf = query_vec_name*idf_name[np.newaxis,:]
 
-    filtered_episodes_desc_tf_idf = data["tf_idf_description"][filtered_episode_indices]
+    filtered_episodes_desc_tf_idf = tf_idf_description[filtered_episode_indices]
     episodes_desc_cos_sim = cosine_similarity(
         query_desc_tf_idf, filtered_episodes_desc_tf_idf)[0]
     top_rank_indices = list(np.argsort(episodes_desc_cos_sim)[::-1][:5])
