@@ -72,11 +72,11 @@ def get_ranked_episodes(query):
     #     "year_published": int (optional)
     # }
     for s3_object in s3_bucket.objects.all():
-    if (s3_object.key[-1] != '/'): # if not a folder
-        filename = s3_object.key.split('/')[-1]
-        if filename[-9:][:4] != "name":
-            s3_bucket.download_file(s3_object.key, filename)
-            
+        if (s3_object.key[-1] != '/'): # if not a folder
+            filename = s3_object.key.split('/')[-1]
+            if filename[-9:][:4] != "name":
+                s3_bucket.download_file(s3_object.key, filename)
+
     with open("episode_id_to_idx.json") as f:
         episode_id_to_idx = json.load(f)
     with open("genre_to_episodes.json") as f:
