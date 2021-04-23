@@ -69,7 +69,7 @@ def collect_shows(chart_indices):
             return i
 
         show_soup = BeautifulSoup(chart_page.content, 'html.parser')
-        all_shows = show_soup.find_all('tr', class_='striped--near-white')[:10]
+        all_shows = show_soup.find_all('tr', class_='striped--near-white')[:7]
 
         key = ' '.join(((chart_url.split('/')[-1]).split('-'))[4:])
 
@@ -130,7 +130,7 @@ def get_all_episodes(shows):
     for show_id in shows.keys():
         try:
             results = sp.show_episodes(
-                show_id, limit=20, offset=0, market='US')
+                show_id, limit=10, offset=0, market='US')
             episode_items = results['items']
             for episode in episode_items:
                 if len(episode['description']) > 0:
@@ -191,7 +191,7 @@ if __name__ == "__main__":
     shows = get_all_shows(genres_to_shows)
     episodes = get_all_episodes(shows)
     get_tf_idf_vectors(episodes, 'description', 0.8)
-    # get_tf_idf_vectors(episodes, 'name', 0.8)
+    get_tf_idf_vectors(episodes, 'name', 0.8)
     genre_to_episodes = group_by_genre(episodes)
     print(f"There are {len(shows)} shows and {len(episodes)} episodes.")
     print(f"There are {len(genre_to_episodes)} genres: {genre_to_episodes.keys()}")
