@@ -79,6 +79,8 @@ def collect_shows(chart_indices):
             if not show_name:
                 show_name = show.find('div', class_='title f4')
             genre = ' & '.join(key.split('?')[0].split()).title()
+            if genre == "True & Crime":
+                genre = "True Crime"
             
             genres_to_shows[genre].append(
                 {"show_name": show_name.text, "rank": show_rank.text})
@@ -190,6 +192,8 @@ if __name__ == "__main__":
     genres_to_shows = load_shows_from_chartable(chart_urls)
     shows = get_all_shows(genres_to_shows)
     episodes = get_all_episodes(shows)
+    with open("episodes.json", 'w') as json_file:
+        json.dump(episodes, json_file)
     get_tf_idf_vectors(episodes, 'description', 0.8)
     get_tf_idf_vectors(episodes, 'name', 0.8)
     genre_to_episodes = group_by_genre(episodes)
