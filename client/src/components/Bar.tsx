@@ -10,7 +10,7 @@ const useStyles = makeStyles({
   bar: {
     display: "flex",
     justifyContent: "center",
-    margin: (props: BarProps) => `${props.barHeight}px 0px`,
+    padding: (props: BarProps) => `${props.barHeight}px 0px`,
     overflow: "auto",
   },
 });
