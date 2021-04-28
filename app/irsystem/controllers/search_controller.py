@@ -26,22 +26,22 @@ names = [
 #                         aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
 #                         region_name=os.environ.get('AWS_DEFAULT_REGION'))
 # s3.download_file('cs4300-listen-and-learn-tf-idf-data', 'tf_idf_description.json', 'tf_idf_description.json')
-with open("episode_id_to_idx.json") as f:
-    episode_id_to_idx = json.load(f)
-with open("genre_to_episodes.json") as f:
-    genre_to_episodes = json.load(f)
-with open("terms_description.json") as f:
-    terms_description = json.load(f)
-with open("idf_description.json") as f:
-    idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-with open("tf_idf_description.json") as f:
-    tf_idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-with open("terms_name.json") as f:
-    terms_name = json.load(f)
-with open("idf_name.json") as f:
-    idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-with open("tf_idf_name.json") as f:
-    tf_idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
+# with open("episode_id_to_idx.json") as f:
+#     episode_id_to_idx = json.load(f)
+# with open("genre_to_episodes.json") as f:
+#     genre_to_episodes = json.load(f)
+# with open("terms_description.json") as f:
+#     terms_description = json.load(f)
+# with open("idf_description.json") as f:
+#     idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
+# with open("tf_idf_description.json") as f:
+#     tf_idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
+# with open("terms_name.json") as f:
+#     terms_name = json.load(f)
+# with open("idf_name.json") as f:
+#     idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
+# with open("tf_idf_name.json") as f:
+#     tf_idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
 
 
 @irsystem.route("/", methods=["GET"])
