@@ -26,22 +26,24 @@ names = [
 #                         aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
 #                         region_name=os.environ.get('AWS_DEFAULT_REGION'))
 # s3.download_file('cs4300-listen-and-learn-tf-idf-data', 'tf_idf_description.json', 'tf_idf_description.json')
-# with open("episode_id_to_idx.json") as f:
-#     episode_id_to_idx = json.load(f)
-# with open("genre_to_episodes.json") as f:
-#     genre_to_episodes = json.load(f)
-# with open("terms_description.json") as f:
-#     terms_description = json.load(f)
-# with open("idf_description.json") as f:
-#     idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-# with open("tf_idf_description.json") as f:
-#     tf_idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-# with open("terms_name.json") as f:
-#     terms_name = json.load(f)
-# with open("idf_name.json") as f:
-#     idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-# with open("tf_idf_name.json") as f:
-#     tf_idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
+with open("episode_id_to_idx.json") as f:
+    episode_id_to_idx = json.load(f)
+with open("genre_to_episodes.json") as f:
+    genre_to_episodes = json.load(f)
+with open("terms_description.json") as f:
+    terms_description = json.load(f)
+with open("idf_description.json") as f:
+    idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
+with open("tf_idf_description.json") as f:
+    tf_idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
+with open("terms_name.json") as f:
+    terms_name = json.load(f)
+with open("idf_name.json") as f:
+    idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
+with open("tf_idf_name.json") as f:
+    tf_idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
+with open("cooccurrence.json") as f:
+    cooccurrence_matrix = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
 
 
 @irsystem.route("/", methods=["GET"])
@@ -87,12 +89,11 @@ def filter_helper(genre, duration, year, publisher):
 
 def thesaurus(query_str, query, num_result):
     if len(query) <= 2:
-        cooccurence_matrix = np.dot(tf_idf_description.T, tf_idf_description)
         new_query = query[:]
         for word in query:
             if word in terms_description:
                 word_idx = terms_description.index(word)
-                sorted_word_indicies = np.argsort(cooccurence_matrix[word_idx])[::-1]
+                sorted_word_indicies = np.argsort(cooccurrence_matrix[word_idx])[::-1]
                 for i in range(0, num_result):
                     j = sorted_word_indicies[i + 1]
                     new_query.append(terms_description[j])
