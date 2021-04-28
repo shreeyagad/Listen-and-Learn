@@ -90,15 +90,13 @@ def thesaurus(query_str, query, num_result):
         cooccurence_matrix = np.dot(tf_idf_description.T, tf_idf_description)
         new_query = query[:]
         for word in query:
-            print(word)
-            word_idx = terms_description.index(word)
-            sorted_word_indicies = np.argsort(cooccurence_matrix[word_idx])[::-1]
-            for i in range(0, num_result):
-                print("similar word")
-                j = sorted_word_indicies[i + 1]
-                print(terms_description[j])
-                new_query.append(terms_description[j])
-        new_query = " ".join(new_query)
+            if word in terms_description:
+                word_idx = terms_description.index(word)
+                sorted_word_indicies = np.argsort(cooccurence_matrix[word_idx])[::-1]
+                for i in range(0, num_result):
+                    j = sorted_word_indicies[i + 1]
+                    new_query.append(terms_description[j])
+            new_query = " ".join(new_query)
         return new_query
     else:
         return query_str
@@ -187,7 +185,7 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.7, num_ep=5):
     The query object has the following structure: {
          "query": str (required),
          "duration": int (optional),
-         "genre": list[str] (optional),
+         "genres": list[str] (optional),
          "publisher": str (optional),
          "year_published": int (optional)
      }
