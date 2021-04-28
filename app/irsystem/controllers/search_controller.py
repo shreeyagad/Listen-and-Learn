@@ -175,8 +175,8 @@ def get_cos_sim(query):
 
 def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.7, num_ep=5):
     '''
-    Inputs: 
-    - Query 
+    Inputs:
+    - Query
     The query object has the following structure: {
          "query": str (required),
          "duration": int (optional),
@@ -184,13 +184,14 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.7, num_ep=5):
          "publisher": str (optional),
          "year_published": int (optional)
      }
-    - name_wt (int) - multiplier for name cos sim 
-    - desc_wt (int) - multiplier for description cos sim 
+    - name_wt (int) - multiplier for name cos sim
+    - desc_wt (int) - multiplier for description cos sim
     - name_thr (float) - if name cos_sim exceeds this immdetialy return that episode
-    - num_ep (int) - number of episodes to return as results 
+    - num_ep (int) - number of episodes to return as results
 
     Output: a list of tuples of the form [(ep object 1, cos sim score 1), (ep object 2, cos sim score 2)...]
     --> has type list (dict, float)
+    Each episode dictionary returned has the added filed sim_score which is out of 100.
     '''
     ranked_episodes = []
     desc_cs, name_cs, filtered_episodes = get_cos_sim(query)
@@ -216,5 +217,17 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.7, num_ep=5):
     if num < num_ep:
         top_rank_indices = list(np.argsort(total_cs)[::-1][:num_ep-num])
         for i in top_rank_indices:
-            ranked_episodes.append((filtered_episodes[i][1], total_cs[i]))
+            filtered_episodes[i][1]['sim_score'] = total_cs[i]
+            ranked_episodes.append(filtered_episodes[i][1])
     return ranked_episodes
+
+
+# test_query = {
+#     "query": "hdd",
+#     "duration": None,
+#     "genres": [],
+#     "publisher": None,
+#     "year_published": None
+# }
+
+# print(get_ranked_episodes(test_query))
