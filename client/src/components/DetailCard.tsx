@@ -72,7 +72,7 @@ export const DetailCard = ({ result }: DetailCardProps) => {
           title="Live from space album cover"
         />
         <div className={classes.content}>
-          <Typography variant="h4">{result.show_name}</Typography>
+          <Typography variant="h4">{result.episode_name}</Typography>
           <div className={classes.row}>
             <Typography variant="subtitle1" color="textSecondary">
               By
@@ -88,7 +88,7 @@ export const DetailCard = ({ result }: DetailCardProps) => {
           <div className={classes.row}>
             <a
               className={`${classes.row} ${classes.iconRow}`}
-              href={`https://open.spotify.com/show/${result.show_id}`}
+              href={`https://open.spotify.com/episode/${result.episode_id}`}
               target="_blank"
               rel="noreferrer"
             >
@@ -98,10 +98,10 @@ export const DetailCard = ({ result }: DetailCardProps) => {
                 src={SpotifyLogo}
                 style={{ marginRight: "4px" }}
               />
-              <Typography variant="subtitle2" color="textSecondary">
-                SPOTIFY
-              </Typography>
             </a>
+            <Typography style={{ padding: "0px 8px", marginTop: "8px" }}>
+              {`${Math.ceil(result.duration_ms / 60000)} mins`}
+            </Typography>
           </div>
         </div>
         <div className={classes.genreBox}>
@@ -137,36 +137,41 @@ export const DetailCard = ({ result }: DetailCardProps) => {
         </div>
       </div>
       <div className={classes.row} style={{ marginTop: "10px" }}>
-        <Typography variant="body1">{result.show_description}</Typography>
+        <Typography variant="body1">{result.episode_description}</Typography>
       </div>
       <div className={classes.row} style={{ marginTop: "10px" }}>
-        <Typography variant="h5">Recommended Episode</Typography>
+        <Typography variant="h5">More About this Podcast</Typography>
       </div>
       <div
         className={classes.row}
         style={{ marginTop: "10px", alignItems: "center" }}
       >
         <Typography variant="h6" style={{ paddingRight: "8px" }}>
-          {result.episode_name}
+          {result.show_name}
         </Typography>
         <a
-          href={`https://open.spotify.com/episode/${result.episode_id}`}
+          href={`https://open.spotify.com/show/${result.show_id}`}
           target="_blank"
           rel="noreferrer"
+          style={{ display: "flex", textDecoration: "none" }}
         >
           <img
             alt="Spotify logo"
             className={classes.spotifyLogo}
             src={SpotifyLogo}
-            style={{ padding: "0px 8px" }}
+            style={{ padding: "0px 8px", marginTop: "3px" }}
           />
+          <Typography
+            variant="subtitle2"
+            color="textSecondary"
+            style={{ marginTop: "3px" }}
+          >
+            SPOTIFY
+          </Typography>
         </a>
-        <Typography style={{ padding: "0px 8px" }}>
-          {`${Math.ceil(result.duration_ms / 60000)} mins`}
-        </Typography>
       </div>
       <div className={classes.row} style={{ marginTop: "10px" }}>
-        <Typography variant="body2">{result.episode_description}</Typography>
+        <Typography variant="body2">{result.show_description}</Typography>
       </div>
     </Card>
   );
