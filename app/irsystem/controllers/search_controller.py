@@ -4,6 +4,7 @@ from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
 import numpy as np
 import json
 import time
+import pickle
 from numpy.__config__ import show
 import boto3
 import os
@@ -19,6 +20,16 @@ names = [
     "Shreeya Gad: sg988",
     "Mohammed Ullah: mu83",
 ]
+
+def json_numpy_obj_hook(dct):
+    """Decodes a previously encoded numpy ndarray with proper shape and dtype.
+    :param dct: (dict) json encoded ndarray
+    :return: (ndarray) if input was an encoded ndarray
+    """
+    if isinstance(dct, dict) and '__ndarray__' in dct:
+        data = base64.b64decode(dct['__ndarray__'])
+        return np.frombuffer(data, dct['dtype']).reshape(dct['shape'])
+    return dct
 
 # Download files from S3
 # s3 = boto3.client('s3', aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
@@ -43,7 +54,6 @@ with open("tf_idf_name.json") as f:
     tf_idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
 # with open("cooccurrence.json") as f:
 #     cooccurrence_matrix = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-
 
 @irsystem.route("/", methods=["GET"])
 def index():
@@ -167,10 +177,10 @@ def get_cos_sim(query):
         query_name_tf_idf, filtered_episodes_name_tf_idf
     )[0]
 
-    return (episodes_desc_cos_sim, episodes_name_cos_sim, filtered_episodes)
+    return (episodes_desc_cos_sim, episodes_name_cos_sim, filtered_episodes, query_desc_tf_idf)
 
 
-def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.7, num_ep=5):
+def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.8, num_ep=5):
     """
     Inputs:
     - Query
@@ -191,20 +201,26 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.7, num_ep=5):
     Each episode dictionary returned has the added filed sim_score which is out of 100.
     """
     ranked_episodes = []
-    desc_cs, name_cs, filtered_episodes = get_cos_sim(query)
+    desc_cs, name_cs, filtered_episodes, query_desc_tf_idf = get_cos_sim(query)
 
     for idx in np.argwhere(name_cs > name_thr):
         idx = idx[0]
-        ranked_episodes.append((filtered_episodes[idx][1], 100 * name_cs[idx]))
+        filtered_episodes[idx][1]["sim_score"] = 100 * name_cs[idx]
+        ranked_episodes.append(filtered_episodes[idx][1])
         desc_cs = np.delete(desc_cs, idx)
         name_cs = np.delete(name_cs, idx)
         del filtered_episodes[idx]
+    
+    # loaded_model = pickle.load(open("genre_classification_model.sav", 'rb'))
+    # prediction = loaded_model.predict(query_desc_tf_idf)
+    # genre_to_idx = {genre: g for g, genre in enumerate(genre_to_episodes.keys())}
+    # print(list(genre_to_idx)[prediction[0]])
 
     show_ranks = np.array(
         [int(episode[1]["show_rank"]) for episode in filtered_episodes]
     )
 
-    ranked_episodes = sorted(ranked_episodes, key=lambda x: x[1], reverse=True)[:num_ep]
+    ranked_episodes = sorted(ranked_episodes, key=lambda x: x["sim_score"], reverse=True)[:num_ep]
     num = len(ranked_episodes)
 
     name_cs = name_cs * name_wt
@@ -220,7 +236,7 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.7, num_ep=5):
 
 
 # test_query = {
-#     "query": "crime detective murder mystery",
+#     "query": "learning to invest in the stock market",
 #     "duration": None,
 #     "genres": [],
 #     "publisher": None,
@@ -228,5 +244,6 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.7, num_ep=5):
 # }
 
 # start_time = time.time()
-# print(get_ranked_episodes(test_query))
+# episodes = get_ranked_episodes(test_query)
+# print(episodes)
 # print(time.time() - start_time)
