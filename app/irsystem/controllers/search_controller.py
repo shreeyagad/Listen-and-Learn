@@ -1,6 +1,6 @@
-# from . import *
-# from app.irsystem.models.helpers import *
-# from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
+from . import *
+from app.irsystem.models.helpers import *
+from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
 import numpy as np
 import json
 import time
@@ -19,16 +19,6 @@ names = [
     "Shreeya Gad: sg988",
     "Mohammed Ullah: mu83",
 ]
-
-def json_numpy_obj_hook(dct):
-    """Decodes a previously encoded numpy ndarray with proper shape and dtype.
-    :param dct: (dict) json encoded ndarray
-    :return: (ndarray) if input was an encoded ndarray
-    """
-    if isinstance(dct, dict) and '__ndarray__' in dct:
-        data = base64.b64decode(dct['__ndarray__'])
-        return np.frombuffer(data, dct['dtype']).reshape(dct['shape'])
-    return dct
 
 # Download files from S3
 # s3 = boto3.client('s3', aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
@@ -55,40 +45,23 @@ with open("tf_idf_name.json") as f:
 #     cooccurrence_matrix = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
 
 
-# @irsystem.route("/", methods=["GET"])
-# def index():
-#     return render_template("index.html")
+@irsystem.route("/", methods=["GET"])
+def index():
+    return render_template("index.html")
 
 
-# @irsystem.route("/search", methods=["POST"])
-# def search():
-#     search_object = {
-#         "query": request.json.get("query"),
-#         "duration": request.json.get("duration"),
-#         "genres": request.json.get("genres"),
-#         "publisher": request.json.get("publisher"),
-#         "year_published": request.json.get("year"),
-#     }
+@irsystem.route("/search", methods=["POST"])
+def search():
+    search_object = {
+        "query": request.json.get("query"),
+        "duration": request.json.get("duration"),
+        "genres": request.json.get("genres"),
+        "publisher": request.json.get("publisher"),
+        "year_published": request.json.get("year"),
+    }
 
-#     return jsonify(get_ranked_episodes(search_object))
+    return jsonify(get_ranked_episodes(search_object))
 
-
-# def filter_helper(genre, duration, year, publisher, episode_id_acc):
-#     filtered_episodes = []
-#     episodes_by_genre = genre_to_episodes[genre]
-#     for episode in episodes_by_genre:
-#         if (
-#             (
-#                 duration == None
-#                 or (abs(duration - episode["duration_ms"]) < 0.1 * duration)
-#             )
-#             and (year == None or (abs(year - int(episode["release_date"][:4]))) < 2)
-#             and (publisher == None or publisher == episode["publisher"])
-#         ):
-#             if episode["id"] not in episode_id_acc:
-#                 episode_id_acc.append(episode["id"])
-#                 filtered_episodes.append(episode)
-#     return filtered_episodes, episode_id_acc
 
 def filter_helper(genre, duration, year, publisher):
     filtered_episodes = []
