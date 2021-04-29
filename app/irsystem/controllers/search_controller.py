@@ -1,6 +1,6 @@
-from . import *
-from app.irsystem.models.helpers import *
-from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
+# from . import *
+# from app.irsystem.models.helpers import *
+# from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
 import numpy as np
 import json
 
@@ -21,51 +21,62 @@ names = [
 ]
 
 
+def json_numpy_obj_hook(dct):
+    """Decodes a previously encoded numpy ndarray with proper shape and dtype.
+    :param dct: (dict) json encoded ndarray
+    :return: (ndarray) if input was an encoded ndarray
+    """
+    if isinstance(dct, dict) and '__ndarray__' in dct:
+        data = base64.b64decode(dct['__ndarray__'])
+        return np.frombuffer(data, dct['dtype']).reshape(dct['shape'])
+    return dct
+
 # Download files from S3
 # s3 = boto3.client('s3', aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
 #                         aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
 #                         region_name=os.environ.get('AWS_DEFAULT_REGION'))
 # s3.download_file('cs4300-listen-and-learn-tf-idf-data', 'tf_idf_description.json', 'tf_idf_description.json')
-with open("episode_id_to_idx.json") as f:
+with open("../../../episode_id_to_idx.json") as f:
     episode_id_to_idx = json.load(f)
-with open("genre_to_episodes.json") as f:
+with open("../../../genre_to_episodes.json") as f:
     genre_to_episodes = json.load(f)
-with open("terms_description.json") as f:
+with open("../../../terms_description.json") as f:
     terms_description = json.load(f)
-with open("idf_description.json") as f:
+with open("../../../idf_description.json") as f:
     idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-with open("tf_idf_description.json") as f:
+with open("../../../tf_idf_description.json") as f:
     tf_idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-with open("terms_name.json") as f:
+with open("../../../terms_name.json") as f:
     terms_name = json.load(f)
-with open("idf_name.json") as f:
+with open("../../../idf_name.json") as f:
     idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-with open("tf_idf_name.json") as f:
+with open("../../../tf_idf_name.json") as f:
     tf_idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
 # with open("cooccurrence.json") as f:
 #     cooccurrence_matrix = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
 
 
-@irsystem.route("/", methods=["GET"])
-def index():
-    return render_template("index.html")
 
 
-@irsystem.route("/search", methods=["POST"])
-def search():
-    search_object = {
-        "query": request.json.get("query"),
-        "duration": request.json.get("duration"),
-        "genres": request.json.get("genres"),
-        "publisher": request.json.get("publisher"),
-        "year_published": request.json.get("year"),
-    }
-
-    return jsonify(get_ranked_episodes(search_object))
+# @irsystem.route("/", methods=["GET"])
+# def index():
+#     return render_template("index.html")
 
 
-def filter_helper(genre, duration, year, publisher):
-    episode_id_acc = []
+# @irsystem.route("/search", methods=["POST"])
+# def search():
+#     search_object = {
+#         "query": request.json.get("query"),
+#         "duration": request.json.get("duration"),
+#         "genres": request.json.get("genres"),
+#         "publisher": request.json.get("publisher"),
+#         "year_published": request.json.get("year"),
+#     }
+
+#     return jsonify(get_ranked_episodes(search_object))
+
+
+def filter_helper(genre, duration, year, publisher, episode_id_acc):
     filtered_episodes = []
     episodes_by_genre = genre_to_episodes[genre]
     for episode in episodes_by_genre:
@@ -80,7 +91,7 @@ def filter_helper(genre, duration, year, publisher):
             if episode["id"] not in episode_id_acc:
                 episode_id_acc.append(episode["id"])
                 filtered_episodes.append(episode)
-    return filtered_episodes
+    return filtered_episodes, episode_id_acc
 
 
 def thesaurus(query_str, query, num_result):
@@ -131,13 +142,19 @@ def get_cos_sim(query):
     query = query["query"].lower()
 
     filtered_episodes = []
+    episode_id_acc = []
 
     if len(genres) >= 1:
         for g in genres:
-            filtered_episodes += filter_helper(g, duration, year, publisher)
+            new_eps, upd_ep_id_acc = filter_helper(g, duration, year, publisher, episode_id_acc)
+            filtered_episodes += new_eps
+            episode_id_acc += upd_ep_id_acc
     else:
         for g in genre_to_episodes.keys():
-            filtered_episodes += filter_helper(g, duration, year, publisher)
+            new_eps, upd_ep_id_acc = filter_helper(g, duration, year, publisher, episode_id_acc)
+            filtered_episodes += new_eps
+            episode_id_acc += upd_ep_id_acc
+
 
     # List of tuples, each tuple contains the index of episode in episodes data set.
     # Used when calculating cosine similarity with the pre-computed tf-idf scores.
@@ -224,12 +241,12 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.7, num_ep=5):
     return ranked_episodes
 
 
-# test_query = {
-#     "query": "hdd",
-#     "duration": None,
-#     "genres": [],
-#     "publisher": None,
-#     "year_published": None
-# }
+test_query = {
+    "query": "crime detective murder mystery",
+    "duration": None,
+    "genres": [],
+    "publisher": None,
+    "year_published": None
+}
 
-# print(get_ranked_episodes(test_query))
+print(get_ranked_episodes(test_query))
