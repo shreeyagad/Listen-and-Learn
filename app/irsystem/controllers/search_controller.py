@@ -3,7 +3,8 @@ from app.irsystem.models.helpers import *
 from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
 import numpy as np
 import json
-
+import time
+import pickle
 from numpy.__config__ import show
 import boto3
 import os
@@ -20,6 +21,15 @@ names = [
     "Mohammed Ullah: mu83",
 ]
 
+def json_numpy_obj_hook(dct):
+    """Decodes a previously encoded numpy ndarray with proper shape and dtype.
+    :param dct: (dict) json encoded ndarray
+    :return: (ndarray) if input was an encoded ndarray
+    """
+    if isinstance(dct, dict) and '__ndarray__' in dct:
+        data = base64.b64decode(dct['__ndarray__'])
+        return np.frombuffer(data, dct['dtype']).reshape(dct['shape'])
+    return dct
 
 # Download files from S3
 # s3 = boto3.client('s3', aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
@@ -42,9 +52,8 @@ with open("idf_name.json") as f:
     idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
 with open("tf_idf_name.json") as f:
     tf_idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-with open("cooccurrence.json") as f:
-    cooccurrence_matrix = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-
+# with open("cooccurrence.json") as f:
+#     cooccurrence_matrix = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
 
 @irsystem.route("/", methods=["GET"])
 def index():
@@ -65,21 +74,15 @@ def search():
 
 
 def filter_helper(genre, duration, year, publisher):
-    episode_id_acc = []
     filtered_episodes = []
     episodes_by_genre = genre_to_episodes[genre]
     for episode in episodes_by_genre:
-        if (
-            (
-                duration == None
-                or (abs(duration - episode["duration_ms"]) < 0.1 * duration)
+        if ((duration == None or (abs(duration - episode["duration_ms"]) < 0.1 * duration)
             )
             and (year == None or (abs(year - int(episode["release_date"][:4]))) < 2)
             and (publisher == None or publisher == episode["publisher"])
         ):
-            if episode["id"] not in episode_id_acc:
-                episode_id_acc.append(episode["id"])
-                filtered_episodes.append(episode)
+            filtered_episodes.append(episode)
     return filtered_episodes
 
 
@@ -139,19 +142,22 @@ def get_cos_sim(query):
         for g in genre_to_episodes.keys():
             filtered_episodes += filter_helper(g, duration, year, publisher)
 
+    filtered_episodes = {episode_id_to_idx[episode["id"]]: episode for episode in filtered_episodes}
+    filtered_episodes = [(k,v) for (k,v) in filtered_episodes.items()]
+
     # List of tuples, each tuple contains the index of episode in episodes data set.
     # Used when calculating cosine similarity with the pre-computed tf-idf scores.
-    filtered_episodes = [
-        (episode_id_to_idx[episode["id"]], episode) for episode in filtered_episodes
-    ]
+    # filtered_episodes = [
+    #     (episode_id_to_idx[episode["id"]], episode) for episode in filtered_episodes
+    # ]
     filtered_episode_indices = [episode[0] for episode in filtered_episodes]
 
     episode_desc_vectorizer = CountVectorizer(vocabulary=terms_description)
 
     # Incorporating similar words into query
-    tokenizer = episode_desc_vectorizer.build_tokenizer()
-    query_tokens = tokenizer(query)
-    query = thesaurus(query, query_tokens, 2)
+    # tokenizer = episode_desc_vectorizer.build_tokenizer()
+    # query_tokens = tokenizer(query)
+    # query = thesaurus(query, query_tokens, 2)
 
     query_vec_desc = episode_desc_vectorizer.fit_transform([query]).toarray().flatten()
 
@@ -160,7 +166,6 @@ def get_cos_sim(query):
     episode_name_vectorizer = CountVectorizer(vocabulary=terms_name)
     query_vec_name = episode_name_vectorizer.fit_transform([query]).toarray().flatten()
     query_name_tf_idf = query_vec_name * idf_name[np.newaxis, :]
-
     filtered_episodes_desc_tf_idf = tf_idf_description[filtered_episode_indices]
     filtered_episodes_name_tf_idf = tf_idf_name[filtered_episode_indices]
 
@@ -172,10 +177,10 @@ def get_cos_sim(query):
         query_name_tf_idf, filtered_episodes_name_tf_idf
     )[0]
 
-    return (episodes_desc_cos_sim, episodes_name_cos_sim, filtered_episodes)
+    return (episodes_desc_cos_sim, episodes_name_cos_sim, filtered_episodes, query_desc_tf_idf)
 
 
-def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.7, num_ep=5):
+def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.8, num_ep=5):
     """
     Inputs:
     - Query
@@ -196,20 +201,26 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.7, num_ep=5):
     Each episode dictionary returned has the added filed sim_score which is out of 100.
     """
     ranked_episodes = []
-    desc_cs, name_cs, filtered_episodes = get_cos_sim(query)
+    desc_cs, name_cs, filtered_episodes, query_desc_tf_idf = get_cos_sim(query)
 
     for idx in np.argwhere(name_cs > name_thr):
         idx = idx[0]
-        ranked_episodes.append((filtered_episodes[idx][1], 100 * name_cs[idx]))
+        filtered_episodes[idx][1]["sim_score"] = 100 * name_cs[idx]
+        ranked_episodes.append(filtered_episodes[idx][1])
         desc_cs = np.delete(desc_cs, idx)
         name_cs = np.delete(name_cs, idx)
         del filtered_episodes[idx]
+    
+    # loaded_model = pickle.load(open("genre_classification_model.sav", 'rb'))
+    # prediction = loaded_model.predict(query_desc_tf_idf)
+    # genre_to_idx = {genre: g for g, genre in enumerate(genre_to_episodes.keys())}
+    # print(list(genre_to_idx)[prediction[0]])
 
     show_ranks = np.array(
         [int(episode[1]["show_rank"]) for episode in filtered_episodes]
     )
 
-    ranked_episodes = sorted(ranked_episodes, key=lambda x: x[1], reverse=True)[:num_ep]
+    ranked_episodes = sorted(ranked_episodes, key=lambda x: x["sim_score"], reverse=True)[:num_ep]
     num = len(ranked_episodes)
 
     name_cs = name_cs * name_wt
@@ -225,11 +236,14 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.7, num_ep=5):
 
 
 # test_query = {
-#     "query": "hdd",
+#     "query": "learning to invest in the stock market",
 #     "duration": None,
 #     "genres": [],
 #     "publisher": None,
 #     "year_published": None
 # }
 
-# print(get_ranked_episodes(test_query))
+# start_time = time.time()
+# episodes = get_ranked_episodes(test_query)
+# print(episodes)
+# print(time.time() - start_time)
