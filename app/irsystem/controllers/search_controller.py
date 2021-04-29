@@ -1,6 +1,6 @@
-# from . import *
-# from app.irsystem.models.helpers import *
-# from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
+from . import *
+from app.irsystem.models.helpers import *
+from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
 import numpy as np
 import json
 
@@ -20,37 +20,26 @@ names = [
     "Mohammed Ullah: mu83",
 ]
 
-
-def json_numpy_obj_hook(dct):
-    """Decodes a previously encoded numpy ndarray with proper shape and dtype.
-    :param dct: (dict) json encoded ndarray
-    :return: (ndarray) if input was an encoded ndarray
-    """
-    if isinstance(dct, dict) and '__ndarray__' in dct:
-        data = base64.b64decode(dct['__ndarray__'])
-        return np.frombuffer(data, dct['dtype']).reshape(dct['shape'])
-    return dct
-
 # Download files from S3
 # s3 = boto3.client('s3', aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
 #                         aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
 #                         region_name=os.environ.get('AWS_DEFAULT_REGION'))
 # s3.download_file('cs4300-listen-and-learn-tf-idf-data', 'tf_idf_description.json', 'tf_idf_description.json')
-with open("../../../episode_id_to_idx.json") as f:
+with open("episode_id_to_idx.json") as f:
     episode_id_to_idx = json.load(f)
-with open("../../../genre_to_episodes.json") as f:
+with open("genre_to_episodes.json") as f:
     genre_to_episodes = json.load(f)
-with open("../../../terms_description.json") as f:
+with open("terms_description.json") as f:
     terms_description = json.load(f)
-with open("../../../idf_description.json") as f:
+with open("idf_description.json") as f:
     idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-with open("../../../tf_idf_description.json") as f:
+with open("tf_idf_description.json") as f:
     tf_idf_description = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-with open("../../../terms_name.json") as f:
+with open("terms_name.json") as f:
     terms_name = json.load(f)
-with open("../../../idf_name.json") as f:
+with open("idf_name.json") as f:
     idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-with open("../../../tf_idf_name.json") as f:
+with open("tf_idf_name.json") as f:
     tf_idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
 # with open("cooccurrence.json") as f:
 #     cooccurrence_matrix = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
@@ -58,22 +47,22 @@ with open("../../../tf_idf_name.json") as f:
 
 
 
-# @irsystem.route("/", methods=["GET"])
-# def index():
-#     return render_template("index.html")
+@irsystem.route("/", methods=["GET"])
+def index():
+    return render_template("index.html")
 
 
-# @irsystem.route("/search", methods=["POST"])
-# def search():
-#     search_object = {
-#         "query": request.json.get("query"),
-#         "duration": request.json.get("duration"),
-#         "genres": request.json.get("genres"),
-#         "publisher": request.json.get("publisher"),
-#         "year_published": request.json.get("year"),
-#     }
+@irsystem.route("/search", methods=["POST"])
+def search():
+    search_object = {
+        "query": request.json.get("query"),
+        "duration": request.json.get("duration"),
+        "genres": request.json.get("genres"),
+        "publisher": request.json.get("publisher"),
+        "year_published": request.json.get("year"),
+    }
 
-#     return jsonify(get_ranked_episodes(search_object))
+    return jsonify(get_ranked_episodes(search_object))
 
 
 def filter_helper(genre, duration, year, publisher, episode_id_acc):
