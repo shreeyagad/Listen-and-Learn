@@ -42,8 +42,8 @@ with open("idf_name.json") as f:
     idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
 with open("tf_idf_name.json") as f:
     tf_idf_name = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
-with open("cooccurrence.json") as f:
-    cooccurrence_matrix = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
+# with open("cooccurrence.json") as f:
+#     cooccurrence_matrix = json.load(f, object_hook=json_numpy_obj_hook, encoding="utf8")
 
 
 @irsystem.route("/", methods=["GET"])
@@ -149,9 +149,9 @@ def get_cos_sim(query):
     episode_desc_vectorizer = CountVectorizer(vocabulary=terms_description)
 
     # Incorporating similar words into query
-    tokenizer = episode_desc_vectorizer.build_tokenizer()
-    query_tokens = tokenizer(query)
-    query = thesaurus(query, query_tokens, 2)
+    # tokenizer = episode_desc_vectorizer.build_tokenizer()
+    # query_tokens = tokenizer(query)
+    # query = thesaurus(query, query_tokens, 2)
 
     query_vec_desc = episode_desc_vectorizer.fit_transform([query]).toarray().flatten()
 
