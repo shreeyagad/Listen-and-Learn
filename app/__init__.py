@@ -14,9 +14,7 @@ socketio = SocketIO()
 app = Flask(
     __name__, template_folder="../client/build", static_folder="../client/build/static"
 )
-from flask_cors import CORS
 
-CORS(app)
 app.config.from_object(os.environ["APP_SETTINGS"])
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 
