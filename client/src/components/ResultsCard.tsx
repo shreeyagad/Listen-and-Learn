@@ -89,6 +89,8 @@ export const ResultsCard = ({ result }: ResultsCardProps) => {
               <a
                 className={`${classes.row} ${classes.iconRow}`}
                 href={`https://open.spotify.com/show/${result.show_id}`}
+                target="_blank"
+                rel="noreferrer"
               >
                 <img
                   alt="Spotify logo"

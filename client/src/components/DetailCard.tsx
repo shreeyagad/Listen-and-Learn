@@ -89,6 +89,8 @@ export const DetailCard = ({ result }: DetailCardProps) => {
             <a
               className={`${classes.row} ${classes.iconRow}`}
               href={`https://open.spotify.com/show/${result.show_id}`}
+              target="_blank"
+              rel="noreferrer"
             >
               <img
                 alt="Spotify logo"
@@ -147,7 +149,11 @@ export const DetailCard = ({ result }: DetailCardProps) => {
         <Typography variant="h6" style={{ paddingRight: "8px" }}>
           {result.episode_name}
         </Typography>
-        <a href={`https://open.spotify.com/episode/${result.episode_id}`}>
+        <a
+          href={`https://open.spotify.com/episode/${result.episode_id}`}
+          target="_blank"
+          rel="noreferrer"
+        >
           <img
             alt="Spotify logo"
             className={classes.spotifyLogo}

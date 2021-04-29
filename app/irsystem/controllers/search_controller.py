@@ -61,15 +61,11 @@ def search():
         "year_published": request.json.get("year"),
     }
 
-    print(get_ranked_episodes(search_object))
     return jsonify(get_ranked_episodes(search_object))
 
 
-# Global variable; relevant for removing duplicate episodes
-episode_id_acc = []
-
-
 def filter_helper(genre, duration, year, publisher):
+    episode_id_acc = []
     filtered_episodes = []
     episodes_by_genre = genre_to_episodes[genre]
     for episode in episodes_by_genre:
