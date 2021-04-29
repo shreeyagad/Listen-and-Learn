@@ -230,12 +230,12 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.7, num_ep=5):
     return ranked_episodes
 
 
-test_query = {
-    "query": "crime detective murder mystery",
-    "duration": None,
-    "genres": [],
-    "publisher": None,
-    "year_published": None
-}
+# test_query = {
+#     "query": "crime detective murder mystery",
+#     "duration": None,
+#     "genres": [],
+#     "publisher": None,
+#     "year_published": None
+# }
 
-print(get_ranked_episodes(test_query))
+# print(get_ranked_episodes(test_query))
