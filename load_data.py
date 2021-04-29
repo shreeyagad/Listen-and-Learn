@@ -166,13 +166,13 @@ def get_tf_idf_vectors(episodes, category, max_df):
     idf = vectorizer.idf_
     terms = vectorizer.get_feature_names()
     cooccurence = np.dot(mat.T, mat)
-
+    print(np.shape(cooccurence))
     file_name_tf_idf_vectors = 'tf_idf_{}.json'.format(category)
     file_name_idf = 'idf_{}.json'.format(category)
     file_name_terms = 'terms_{}.json'.format(category)
 
     #cooccurrence matrix for thesaurus  
-    json.dump(mat, open('cooccurrence.json', 'w'), cls=NumpyEncoder)
+    json.dump(cooccurence, open('cooccurrence.json', 'w'), cls=NumpyEncoder)
 
 
     json.dump(mat, open(file_name_tf_idf_vectors, 'w'), cls=NumpyEncoder)
