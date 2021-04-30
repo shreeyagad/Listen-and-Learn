@@ -3,6 +3,7 @@ import Button from "@material-ui/core/Button";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
 import CardActions from "@material-ui/core/CardActions";
+import CircularProgress from "@material-ui/core/CircularProgress";
 import TextField from "@material-ui/core/TextField";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
@@ -17,6 +18,8 @@ export interface AdvancedSearchProps {
     publisher: string | null,
     year: Date | null
   ) => void;
+  setLoading: (val: boolean) => void;
+  loading: boolean;
 }
 
 const genreList = [
@@ -54,7 +57,11 @@ const useStyles = makeStyles({
   },
 });
 
-export const AdvancedSearch = ({ searchCallback }: AdvancedSearchProps) => {
+export const AdvancedSearch = ({
+  searchCallback,
+  setLoading,
+  loading,
+}: AdvancedSearchProps) => {
   const classes = useStyles();
   const [duration, setDuration] = useState<Date | null>(null);
   const [genres, setGenres] = useState<Array<string>>([]);
@@ -113,9 +120,21 @@ export const AdvancedSearch = ({ searchCallback }: AdvancedSearchProps) => {
       </CardContent>
       <CardActions className={classes.actions}>
         <Button
-          onClick={() => searchCallback(duration, genres, publisher, year)}
+          onClick={() => {
+            searchCallback(duration, genres, publisher, year);
+            setLoading(true);
+          }}
+          variant="contained"
+          color="primary"
         >
-          Search
+          {loading ? (
+            <CircularProgress
+              style={{ height: 30, width: 30 }}
+              color="secondary"
+            />
+          ) : (
+            "Search"
+          )}
         </Button>
         <Button onClick={resetFields}>Reset</Button>
       </CardActions>

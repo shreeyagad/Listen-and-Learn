@@ -8,6 +8,9 @@ import { Home } from "./Home";
 const theme = createMuiTheme({
   palette: {
     primary: green,
+    secondary: {
+      main: "#000000",
+    },
   },
 });
 
