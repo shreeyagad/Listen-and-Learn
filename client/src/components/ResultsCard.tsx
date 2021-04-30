@@ -72,7 +72,7 @@ export const ResultsCard = ({ result }: ResultsCardProps) => {
             title="Live from space album cover"
           />
           <div className={classes.content}>
-            <Typography variant="h4">{result.show_name}</Typography>
+            <Typography variant="h4">{result.episode_name}</Typography>
             <div className={classes.row}>
               <Typography variant="subtitle1" color="textSecondary">
                 By
@@ -88,7 +88,7 @@ export const ResultsCard = ({ result }: ResultsCardProps) => {
             <div className={classes.row}>
               <a
                 className={`${classes.row} ${classes.iconRow}`}
-                href={`https://open.spotify.com/show/${result.show_id}`}
+                href={`https://open.spotify.com/episode/${result.episode_id}`}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -105,7 +105,7 @@ export const ResultsCard = ({ result }: ResultsCardProps) => {
           </div>
         </div>
         <div className={classes.row} style={{ marginTop: "10px" }}>
-          <Typography variant="body1">{result.show_description}</Typography>
+          <Typography variant="body1">{result.episode_description}</Typography>
         </div>
         <CardActions className={classes.actions}>
           <Button
