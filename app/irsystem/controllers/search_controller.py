@@ -21,15 +21,15 @@ names = [
     "Mohammed Ullah: mu83",
 ]
 
-def json_numpy_obj_hook(dct):
-    """Decodes a previously encoded numpy ndarray with proper shape and dtype.
-    :param dct: (dict) json encoded ndarray
-    :return: (ndarray) if input was an encoded ndarray
-    """
-    if isinstance(dct, dict) and '__ndarray__' in dct:
-        data = base64.b64decode(dct['__ndarray__'])
-        return np.frombuffer(data, dct['dtype']).reshape(dct['shape'])
-    return dct
+# def json_numpy_obj_hook(dct):
+#     """Decodes a previously encoded numpy ndarray with proper shape and dtype.
+#     :param dct: (dict) json encoded ndarray
+#     :return: (ndarray) if input was an encoded ndarray
+#     """
+#     if isinstance(dct, dict) and '__ndarray__' in dct:
+#         data = base64.b64decode(dct['__ndarray__'])
+#         return np.frombuffer(data, dct['dtype']).reshape(dct['shape'])
+#     return dct
 
 # Download files from S3
 # s3 = boto3.client('s3', aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
@@ -211,10 +211,18 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.8, num_ep=5):
         name_cs = np.delete(name_cs, idx)
         del filtered_episodes[idx]
     
-    # loaded_model = pickle.load(open("genre_classification_model.sav", 'rb'))
-    # prediction = loaded_model.predict(query_desc_tf_idf)
-    # genre_to_idx = {genre: g for g, genre in enumerate(genre_to_episodes.keys())}
-    # print(list(genre_to_idx)[prediction[0]])
+    loaded_model = pickle.load(open("genre_classification_model.sav", 'rb'))
+    prediction = loaded_model.predict(query_desc_tf_idf)
+
+    genre_to_idx = {genre: g for g, genre in enumerate(genre_to_episodes.keys())}
+    predicted_genre = list(genre_to_idx)[prediction[0]]
+
+    genre_scores = np.zeros((len(filtered_episodes),))
+    for i in range(len(filtered_episodes)):
+        if predicted_genre in filtered_episodes[i][1]["genres"]:
+            genre_scores[i] = 1
+        else:
+            genre_scores[i] = 0.8
 
     show_ranks = np.array(
         [int(episode[1]["show_rank"]) for episode in filtered_episodes]
@@ -225,7 +233,7 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.8, num_ep=5):
 
     name_cs = name_cs * name_wt
     desc_cs = desc_cs * desc_wt
-    total_cs = (desc_cs + name_cs) / (np.log(show_ranks) + 1)
+    total_cs = genre_scores * ((desc_cs + name_cs) / (np.log(show_ranks) + 1))
 
     if num < num_ep:
         top_rank_indices = list(np.argsort(total_cs)[::-1][: num_ep - num])
@@ -235,15 +243,15 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.8, num_ep=5):
     return ranked_episodes
 
 
-# test_query = {
-#     "query": "learning to invest in the stock market",
-#     "duration": None,
-#     "genres": [],
-#     "publisher": None,
-#     "year_published": None
-# }
+test_query = {
+    "query": "learning to invest in the stock market",
+    "duration": None,
+    "genres": [],
+    "publisher": None,
+    "year_published": None
+}
 
-# start_time = time.time()
-# episodes = get_ranked_episodes(test_query)
-# print(episodes)
-# print(time.time() - start_time)
+start_time = time.time()
+episodes = get_ranked_episodes(test_query)
+print(episodes)
+print(time.time() - start_time)
