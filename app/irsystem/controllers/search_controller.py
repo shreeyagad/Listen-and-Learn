@@ -129,8 +129,9 @@ def get_cos_sim(query):
 
     genres = query["genres"]
     publisher = query["publisher"]
-    year = query["year_published"]
-    duration = query["duration"]
+    year = int(query["year_published"])
+    duration = query["duration"].split(":")
+    duration = 60000*(int(duration[0])*60 + int(duration[1]))
     query = query["query"].lower()
 
     filtered_episodes = []
