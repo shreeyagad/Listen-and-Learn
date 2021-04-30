@@ -25,6 +25,7 @@ export const Home = () => {
   const classes = useStyles();
   const [query, setQuery] = useState("");
   const [dataResults, setData] = useState<Array<ShowData> | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const searchCallback = async (
     duration: Date | null,
@@ -40,6 +41,7 @@ export const Home = () => {
       year
     );
     setData(results);
+    setLoading(false);
   };
 
   return (
@@ -51,7 +53,11 @@ export const Home = () => {
         <Search query={query} setQuery={setQuery} />
       </Bar>
       <Bar barHeight={25}>
-        <AdvancedSearch searchCallback={searchCallback} />
+        <AdvancedSearch
+          searchCallback={searchCallback}
+          setLoading={setLoading}
+          loading={loading}
+        />
       </Bar>
       {dataResults?.map((result) => {
         return (
