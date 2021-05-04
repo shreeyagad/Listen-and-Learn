@@ -1,17 +1,17 @@
+from app.irsystem.models.helpers import json_numpy_obj_hook
+from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from spotipy.oauth2 import SpotifyClientCredentials
+import spotipy
+from bs4 import BeautifulSoup
+import json
+import boto3
+import os
+import requests
 import collections
 import numpy as np
 from gevent import monkey
 monkey.patch_all()
-import requests
-import os
-import boto3
-import json
-from bs4 import BeautifulSoup
-import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
-from sklearn.feature_extraction.text import TfidfVectorizer
-from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
-from app.irsystem.models.helpers import json_numpy_obj_hook
 
 sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=os.environ.get('SPOTIFY_CLIENT_ID'),
                                                            client_secret=os.environ.get('SPOTIFY_CLIENT_SECRET')))
@@ -52,6 +52,7 @@ def add_next_pages(chart_indices):
 # Need to load data incrementally due to request limit
 next_page_urls = []
 
+
 def load_next_pages():
     i = 0
     while i != -1:
@@ -81,7 +82,7 @@ def collect_shows(chart_indices):
             genre = ' & '.join(key.split('?')[0].split()).title()
             if genre == "True & Crime":
                 genre = "True Crime"
-            
+
             genres_to_shows[genre].append(
                 {"show_name": show_name.text, "rank": show_rank.text})
     return -1
@@ -89,6 +90,8 @@ def collect_shows(chart_indices):
 
 # Need to load data incrementally due to request limit
 genres_to_shows = collections.defaultdict(list)
+
+
 def load_shows_from_chartable(chart_urls):
     i = 0
     while i != -1:
@@ -166,7 +169,7 @@ def get_tf_idf_vectors(episodes, category, max_df):
     idf = vectorizer.idf_
     terms = vectorizer.get_feature_names()
 
-    #cooccurrence matrix for thesaurus  
+    # cooccurrence matrix for thesaurus
     # if category == 'description':
     #     cooccurence = np.dot(mat.T, mat)
     #     json.dump(cooccurence, open('cooccurrence.json', 'w'), cls=NumpyEncoder)
@@ -179,7 +182,6 @@ def get_tf_idf_vectors(episodes, category, max_df):
     json.dump(idf, open(file_name_idf, 'w'), cls=NumpyEncoder)
     with open(file_name_terms, 'w') as json_file:
         json.dump(terms, json_file)
-    
 
 
 def group_by_genre(episodes):
@@ -188,10 +190,38 @@ def group_by_genre(episodes):
         genres = episodes[episode]['genres']
         for genre in genres:
             genre_to_episodes[genre].append(episodes[episode])
-    
+
     with open('genre_to_episodes.json', 'w') as json_file:
         json.dump(genre_to_episodes, json_file)
     return genre_to_episodes
+
+
+def thesaurus(episodes):
+    with open("terms_description.json") as f:
+        terms_description = json.load(f)
+
+    vec = CountVectorizer(stop_words='english',
+                          max_features=3000, max_df=0.8, binary=True)
+    episodes_desc = [episodes[episode_id]['description']
+                     for episode_id in episodes]
+    bin_mat = vec.fit_transform(episodes_desc).toarray()
+    cooccurence = np.dot(bin_mat.T, bin_mat)
+
+    ni = np.sum(bin_mat, axis=0)
+    PMI_part = cooccurence / ni
+    PMI = PMI_part.T/ni
+
+    PMI_sorted = np.argsort(PMI, axis=1)
+    terms = vec.get_feature_names()
+
+    result = {}
+    for word_i in range(0, len(terms)):
+        word = terms[word_i]
+        result[word] = []
+        for w in PMI_sorted[word_i][::-1][1:3]:
+            result[word].append(terms[w])
+    with open('thesaurus.json', 'w') as json_file:
+        json.dump(result, json_file)
 
 
 if __name__ == "__main__":
@@ -203,5 +233,7 @@ if __name__ == "__main__":
     get_tf_idf_vectors(episodes, 'description', 0.8)
     get_tf_idf_vectors(episodes, 'name', 0.8)
     genre_to_episodes = group_by_genre(episodes)
+    # thesaurus(episodes)
     print(f"There are {len(shows)} shows and {len(episodes)} episodes.")
-    print(f"There are {len(genre_to_episodes)} genres: {genre_to_episodes.keys()}")
+    print(
+        f"There are {len(genre_to_episodes)} genres: {genre_to_episodes.keys()}")
