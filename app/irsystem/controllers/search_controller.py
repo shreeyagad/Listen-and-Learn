@@ -15,6 +15,7 @@ import base64
 import nltk
 nltk.download('wordnet')
 
+
 project_name = "Listen & Learn - Podcast Recommendation Engine"
 names = [
     "Kevin Cook: kjc244",
@@ -75,10 +76,10 @@ def filter_helper(genre, duration, year, publisher):
     episodes_by_genre = genre_to_episodes[genre]
     for episode in episodes_by_genre:
         if ((duration == None or (abs(duration - episode["duration_ms"]) < 0.1 * duration)
-                 )
+             )
                 and (year == None or (abs(year - int(episode["release_date"][:4]))) < 2)
                 and (publisher == None or publisher == episode["publisher"])
-                ):
+            ):
             filtered_episodes.append(episode)
     return filtered_episodes
 
@@ -241,22 +242,17 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.8, num_ep=5):
     show_ranks = np.array(
         [int(episode[1]["show_rank"]) for episode in filtered_episodes]
     )
-    # show_num_reviews = [episode[1]["show_num_reviews"]
-    #                     for episode in filtered_episodes]
+    show_num_reviews = np.array([episode[1]["show_num_reviews"]
+                                 for episode in filtered_episodes])
+    show_num_reviews_log = np.log10(np.log10(show_num_reviews + 10) + 9)
 
-    # type_reveiws = np.array(list(map(lambda x: True if type(
-    #     x) == int else False, show_num_reviews)))
-
-    # type_reveiws = np.argsort(type_reveiws)[:63]
-    # print(np.take(show_num_reviews, type_reveiws))
-    # print(filtered_episodes[type_reveiws[0]])
-    ranked_episodes = sorted(
-        ranked_episodes, key=lambda x: x["sim_score"], reverse=True)[:num_ep]
     num = len(ranked_episodes)
-
     name_cs = name_cs * name_wt
     desc_cs = desc_cs * desc_wt
     total_cs = genre_scores * ((desc_cs + name_cs) / (np.log(show_ranks) + 1))
+    total_cs = total_cs * show_num_reviews_log
+    # make sure total sim score has a max value of 100
+    total_cs[total_cs > 100] = 100
 
     if num < num_ep:
         top_rank_indices = list(np.argsort(total_cs)[::-1][: num_ep - num])
