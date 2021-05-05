@@ -1,23 +1,36 @@
 import React, { useState } from "react";
+import parse from "html-react-parser";
 import { makeStyles } from "@material-ui/core/styles";
+import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import Card from "@material-ui/core/Card";
 import CardActions from "@material-ui/core/CardActions";
 import CardMedia from "@material-ui/core/CardMedia";
 import Typography from "@material-ui/core/Typography";
+import { green } from "@material-ui/core/colors";
 import { DetailModal } from "./DetailModal";
 import DefaultPodcast from "images/defaultPodcast.png";
 import SpotifyLogo from "images/spotify.png";
 import { ShowData } from "api";
+import boldify from "util/boldify";
 
 export interface ResultsCardProps {
   result: ShowData;
+  query: string;
 }
 
 const useStyles = makeStyles({
   root: {
     padding: "20px",
+    position: "relative",
     width: "60%",
+  },
+  avatar: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    margin: "10px",
+    backgroundColor: green[500],
   },
   actions: {
     flexDirection: "row-reverse",
@@ -58,13 +71,16 @@ const useStyles = makeStyles({
   },
 });
 
-export const ResultsCard = ({ result }: ResultsCardProps) => {
+export const ResultsCard = ({ result, query }: ResultsCardProps) => {
   const classes = useStyles();
   const [open, setOpen] = useState(false);
 
   return (
     <React.Fragment>
       <Card className={classes.root}>
+        <Avatar className={classes.avatar}>
+          {Math.trunc(result.sim_score)}
+        </Avatar>
         <div className={classes.row}>
           <CardMedia
             className={classes.cover}
@@ -72,7 +88,9 @@ export const ResultsCard = ({ result }: ResultsCardProps) => {
             title="Live from space album cover"
           />
           <div className={classes.content}>
-            <Typography variant="h4">{result.episode_name}</Typography>
+            <Typography variant="h4">
+              {parse(boldify(result.episode_name, query))}
+            </Typography>
             <div className={classes.row}>
               <Typography variant="subtitle1" color="textSecondary">
                 By
@@ -105,7 +123,9 @@ export const ResultsCard = ({ result }: ResultsCardProps) => {
           </div>
         </div>
         <div className={classes.row} style={{ marginTop: "10px" }}>
-          <Typography variant="body1">{result.episode_description}</Typography>
+          <Typography variant="body1">
+            {parse(boldify(result.episode_description, query))}
+          </Typography>
         </div>
         <CardActions className={classes.actions}>
           <Button
@@ -117,7 +137,7 @@ export const ResultsCard = ({ result }: ResultsCardProps) => {
           </Button>
         </CardActions>
       </Card>
-      <DetailModal open={open} setOpen={setOpen} show={result} />
+      <DetailModal open={open} setOpen={setOpen} show={result} query={query} />
     </React.Fragment>
   );
 };

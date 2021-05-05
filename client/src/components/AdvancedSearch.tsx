@@ -19,6 +19,7 @@ export interface AdvancedSearchProps {
     year: Date | null
   ) => void;
   setLoading: (val: boolean) => void;
+  clear: () => void;
   loading: boolean;
 }
 
@@ -58,6 +59,7 @@ const useStyles = makeStyles({
 });
 
 export const AdvancedSearch = ({
+  clear,
   searchCallback,
   setLoading,
   loading,
@@ -73,6 +75,7 @@ export const AdvancedSearch = ({
     setGenres([]);
     setDuration(null);
     setPublisher(null);
+    clear();
   };
 
   return (
