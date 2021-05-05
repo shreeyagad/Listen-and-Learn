@@ -81,28 +81,92 @@ def collect_shows(chart_indices):
             genre = ' & '.join(key.split('?')[0].split()).title()
             if genre == "True & Crime":
                 genre = "True Crime"
-            
-            genres_to_shows[genre].append(
-                {"show_name": show_name.text, "rank": show_rank.text})
+            genre_to_shows[genre].append(
+                {"show_name": show_name.text, "show_url": show_name.get('href'), "rank": show_rank.text})
     return -1
 
 
 # Need to load data incrementally due to request limit
-genres_to_shows = collections.defaultdict(list)
+genre_to_shows = collections.defaultdict(list)
 def load_shows_from_chartable(chart_urls):
     i = 0
     while i != -1:
         i = collect_shows(range(i, num_urls))
-    return genres_to_shows
+    return genre_to_shows
+
+
+# def collect_reviews(show_indices, show_values):
+#     for i in show_indices:
+#         show_url = show_values[i]['show_url']
+#         if show_url:
+#             show_reviews_page = requests.get(show_url + "/reviews", headers={
+#                                     'User-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36'})
+#             if (show_reviews_page.status_code != 200):
+#                 return i
+
+#             show_reviews_soup = BeautifulSoup(show_reviews_page.content, 'html.parser')
+#             all_reviews = show_reviews_soup.find_all('div', class_='f5 lh-copy mt2')
+
+#             for review in all_reviews:
+#                 if review:
+#                     show_id = show_values[i]['id']
+#                     shows_to_reviews[show_id].append(review.text[1:-1])
+#     return -1
+
+
+# Need to load data incrementally due to request limit
+# shows_to_reviews = collections.defaultdict(list)
+# def load_reviews_from_chartable(shows):
+#     show_values = list(shows.values())
+#     i = 0
+#     while i != -1:
+#         i = collect_reviews(range(i, len(show_values)), show_values)
+#     with open('shows_to_reviews.json', 'w') as json_file:
+#         json.dump(shows_to_reviews, json_file)
+#     return shows_to_reviews
+
+
+def collect_num_reviews(show_indices, show_values):
+    for i in show_indices:
+        show_url = show_values[i]['show_url']
+        show_id = show_values[i]['id']
+        if show_url:
+            show_reviews_page = requests.get(show_url, headers={
+                                    'User-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36'})
+            if (show_reviews_page.status_code != 200):
+                return i
+
+            show_reviews_soup = BeautifulSoup(show_reviews_page.content, 'html.parser')
+            stars = show_reviews_soup.find('div', class_='stars f2')
+            
+            if stars == None:
+                shows_to_num_reviews[show_id] = 0
+            else:
+                num_reviews = stars.find_next_sibling('div').text.split()[-2]
+                num_reviews = int(''.join(num_reviews.split(',')))
+                shows_to_num_reviews[show_id] = num_reviews
+    return -1
+
+
+# Need to load data incrementally due to request limit
+shows_to_num_reviews = collections.defaultdict(list)
+def load_num_reviews_from_chartable(shows):
+    show_values = list(shows.values())
+    i = 0
+    while i != -1:
+        i = collect_num_reviews(range(i, len(show_values)), show_values)
+    with open('shows_to_num_reviews.json', 'w') as json_file:
+        json.dump(shows_to_num_reviews, json_file)
+    return shows_to_num_reviews
 
 
 # Get all shows
-def get_all_shows(genres_to_shows):
+def get_all_shows(genre_to_shows):
     shows = dict()
-    for genre, show_data in genres_to_shows.items():
+    for genre, show_data in genre_to_shows.items():
         for show in show_data:
             try:
-                show_name, rank = show['show_name'], show['rank']
+                show_name, show_url, rank = show['show_name'], show['show_url'], show['rank']
                 results = sp.search(q=show_name, type='show', market='US')
                 show = results['shows']['items'][0]
                 if (show['languages'] == ['en'] or show['languages'] == ['en-US']):
@@ -116,7 +180,8 @@ def get_all_shows(genres_to_shows):
                             "genres": [genre],
                             "languages": show['languages'],
                             "publisher": show['publisher'],
-                            "show_rank": rank
+                            "show_rank": rank,
+                            "show_url": show_url
                         }
                         shows[show['id']] = new_show
             except:
@@ -125,7 +190,7 @@ def get_all_shows(genres_to_shows):
 
 
 # GET ALL EPISODES
-def get_all_episodes(shows):
+def get_all_episodes(shows, shows_to_num_reviews):
     episodes = dict()
     episode_id_to_idx = dict()
     idx = 0
@@ -145,7 +210,8 @@ def get_all_episodes(shows):
                         "genres": shows[show_id]['genres'],
                         "publisher": shows[show_id]['publisher'],
                         "release_date": episode['release_date'],
-                        "show_rank": shows[show_id]['show_rank']
+                        "show_rank": shows[show_id]['show_rank'],
+                        "show_num_reviews": shows_to_num_reviews[show_id]
                     }
                     episodes[episode['id']] = new_episode
                     episode_id_to_idx[episode['id']] = idx
@@ -195,13 +261,14 @@ def group_by_genre(episodes):
 
 
 if __name__ == "__main__":
-    genres_to_shows = load_shows_from_chartable(chart_urls)
-    shows = get_all_shows(genres_to_shows)
-    episodes = get_all_episodes(shows)
-    with open("episodes.json", 'w') as json_file:
-        json.dump(episodes, json_file)
-    get_tf_idf_vectors(episodes, 'description', 0.8)
-    get_tf_idf_vectors(episodes, 'name', 0.8)
-    genre_to_episodes = group_by_genre(episodes)
-    print(f"There are {len(shows)} shows and {len(episodes)} episodes.")
-    print(f"There are {len(genre_to_episodes)} genres: {genre_to_episodes.keys()}")
+    # genre_to_shows = load_shows_from_chartable(chart_urls)
+    # shows = get_all_shows(genre_to_shows)
+    # show_num_reviews = load_num_reviews_from_chartable(shows)
+    # episodes = get_all_episodes(shows, show_num_reviews)
+    # with open("episodes.json", 'w') as json_file:
+    #     json.dump(episodes, json_file)
+    # get_tf_idf_vectors(episodes, 'description', 0.8)
+    # get_tf_idf_vectors(episodes, 'name', 0.8)
+    # genre_to_episodes = group_by_genre(episodes)
+    # print(f"There are {len(shows)} shows and {len(episodes)} episodes.")
+    # print(f"There are {len(genre_to_episodes)} genres: {genre_to_episodes.keys()}")
