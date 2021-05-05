@@ -5,7 +5,7 @@ from spotipy.oauth2 import SpotifyClientCredentials
 import spotipy
 from bs4 import BeautifulSoup
 import json
-import boto3
+# import boto3
 import os
 import requests
 import collections
@@ -150,7 +150,7 @@ def collect_num_reviews(show_indices, show_values):
 
 
 # Need to load data incrementally due to request limit
-shows_to_num_reviews = collections.defaultdict(list)
+shows_to_num_reviews = collections.defaultdict(int)
 def load_num_reviews_from_chartable(shows):
     show_values = list(shows.values())
     i = 0
@@ -245,10 +245,10 @@ def get_tf_idf_vectors(episodes, category, max_df):
 
 def group_by_genre(episodes):
     genre_to_episodes = collections.defaultdict(list)
-    for episode in episodes:
-        genres = episodes[episode]['genres']
+    for episode_id in episodes:
+        genres = episodes[episode_id]['genres']
         for genre in genres:
-            genre_to_episodes[genre].append(episodes[episode])
+            genre_to_episodes[genre].append(episodes[episode_id])
 
     with open('genre_to_episodes.json', 'w') as json_file:
         json.dump(genre_to_episodes, json_file)
@@ -288,8 +288,6 @@ if __name__ == "__main__":
     # shows = get_all_shows(genre_to_shows)
     # show_num_reviews = load_num_reviews_from_chartable(shows)
     # episodes = get_all_episodes(shows, show_num_reviews)
-    # with open("episodes.json", 'w') as json_file:
-    #     json.dump(episodes, json_file)
     # get_tf_idf_vectors(episodes, 'description', 0.8)
     # get_tf_idf_vectors(episodes, 'name', 0.8)
     # genre_to_episodes = group_by_genre(episodes)
