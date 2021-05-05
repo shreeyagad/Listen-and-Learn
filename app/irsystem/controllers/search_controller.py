@@ -6,7 +6,7 @@ import json
 import time
 import pickle
 from numpy.__config__ import show
-import boto3
+# import boto3
 import os
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
