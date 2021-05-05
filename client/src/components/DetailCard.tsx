@@ -1,4 +1,5 @@
 import React from "react";
+import parseHTML from "html-react-parser";
 import { makeStyles } from "@material-ui/core/styles";
 import Card from "@material-ui/core/Card";
 import CardMedia from "@material-ui/core/CardMedia";
@@ -9,9 +10,11 @@ import getYear from "date-fns/getYear";
 import DefaultPodcast from "images/defaultPodcast.png";
 import SpotifyLogo from "images/spotify.png";
 import { ShowData } from "api";
+import boldify from "util/boldify";
 
 export interface DetailCardProps {
   result: ShowData;
+  query: string;
 }
 
 const useStyles = makeStyles({
@@ -60,7 +63,7 @@ const useStyles = makeStyles({
   },
 });
 
-export const DetailCard = ({ result }: DetailCardProps) => {
+export const DetailCard = ({ result, query }: DetailCardProps) => {
   const classes = useStyles();
 
   return (
@@ -69,10 +72,12 @@ export const DetailCard = ({ result }: DetailCardProps) => {
         <CardMedia
           className={classes.cover}
           image={result.images ? result.images[0].url : DefaultPodcast}
-          title="Live from space album cover"
+          title="Podcast cover"
         />
         <div className={classes.content}>
-          <Typography variant="h4">{result.episode_name}</Typography>
+          <Typography variant="h4">
+            {parseHTML(boldify(result.episode_name, query))}
+          </Typography>
           <div className={classes.row}>
             <Typography variant="subtitle1" color="textSecondary">
               By
@@ -137,7 +142,9 @@ export const DetailCard = ({ result }: DetailCardProps) => {
         </div>
       </div>
       <div className={classes.row} style={{ marginTop: "10px" }}>
-        <Typography variant="body1">{result.episode_description}</Typography>
+        <Typography variant="body1">
+          {parseHTML(boldify(result.episode_description, query))}
+        </Typography>
       </div>
       <div className={classes.row} style={{ marginTop: "10px" }}>
         <Typography variant="h5">More About this Podcast</Typography>
@@ -171,7 +178,9 @@ export const DetailCard = ({ result }: DetailCardProps) => {
         </a>
       </div>
       <div className={classes.row} style={{ marginTop: "10px" }}>
-        <Typography variant="body2">{result.show_description}</Typography>
+        <Typography variant="body2">
+          {parseHTML(boldify(result.show_description, query))}
+        </Typography>
       </div>
     </Card>
   );

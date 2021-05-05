@@ -38,7 +38,7 @@ export const Search = ({ query, setQuery }: SearchProps) => {
       <TextField
         fullWidth
         margin="normal"
-        placeholder="Enter a query..."
+        placeholder="Enter a query (ex: how to invest in the stock market)"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         InputProps={inputStyles}

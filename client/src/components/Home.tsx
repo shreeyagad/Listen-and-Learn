@@ -44,6 +44,11 @@ export const Home = () => {
     setLoading(false);
   };
 
+  const clearAll = () => {
+    setQuery("");
+    setData(null);
+  };
+
   return (
     <Container disableGutters className={classes.main}>
       <Bar barHeight={25}>
@@ -57,12 +62,13 @@ export const Home = () => {
           searchCallback={searchCallback}
           setLoading={setLoading}
           loading={loading}
+          clear={clearAll}
         />
       </Bar>
       {dataResults?.map((result) => {
         return (
           <Bar key={result.episode_id} barHeight={25}>
-            <ResultsCard result={result} />{" "}
+            <ResultsCard result={result} query={query} />{" "}
           </Bar>
         );
       })}

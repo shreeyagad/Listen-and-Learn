@@ -10,6 +10,7 @@ export interface DetailModalProps {
   open: boolean;
   setOpen: (val: boolean) => void;
   show: ShowData;
+  query: string;
 }
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -26,7 +27,12 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-export const DetailModal = ({ open, setOpen, show }: DetailModalProps) => {
+export const DetailModal = ({
+  open,
+  setOpen,
+  show,
+  query,
+}: DetailModalProps) => {
   const classes = useStyles();
 
   const handleClose = () => {
@@ -47,7 +53,7 @@ export const DetailModal = ({ open, setOpen, show }: DetailModalProps) => {
       }}
     >
       <Fade in={open}>
-        <DetailCard result={show} />
+        <DetailCard result={show} query={query} />
       </Fade>
     </Modal>
   );
