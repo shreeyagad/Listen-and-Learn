@@ -11,7 +11,10 @@ import os
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import base64
+import nltk
+nltk.download('wordnet')
 from nltk.corpus import wordnet
+
 project_name = "Listen & Learn - Podcast Recommendation Engine"
 names = [
     "Kevin Cook: kjc244",
@@ -81,13 +84,23 @@ def filter_helper(genre, duration, year, publisher):
     return filtered_episodes
 
 
-def thesaurus_fn(query):
-    new_query = query[:]
-    if query in thesaurus.keys():
-        synonyms = thesaurus[query][0]
-        print(synonyms)
-        new_query = query + " " + synonyms
-    print(new_query)
+def synonym_fn(term):
+    synonyms = []
+    for syn in wordnet.synsets(term):
+        for l in syn.lemmas():
+            synonyms.append(l.name())
+    return " ".join(list(set(synonyms))[:3])  # only 3 synonyms per term
+
+
+def thesaurus_fn(query_tokens):
+    new_query = ""
+    for token in query_tokens:
+        new_query = new_query + " " + token
+        if token in thesaurus.keys():
+            synonyms = thesaurus[token][0]
+            new_query = new_query + " " + synonyms
+        new_query = new_query + " " + synonym_fn(token)
+    new_query = new_query.strip()
     return new_query
 
 
@@ -149,14 +162,14 @@ def get_cos_sim(query):
     #     (episode_id_to_idx[episode["id"]], episode) for episode in filtered_episodes
     # ]
     filtered_episode_indices = [episode[0] for episode in filtered_episodes]
-
     episode_desc_vectorizer = CountVectorizer(vocabulary=terms_description)
 
     # Incorporating similar words into query
     tokenizer = episode_desc_vectorizer.build_tokenizer()
     query_tokens = tokenizer(query)
-    if len(query_tokens) == 1:
-        query = thesaurus_fn(query)
+
+    if len(query_tokens) <= 2:
+        query = thesaurus_fn(query_tokens)
 
     query_vec_desc = episode_desc_vectorizer.fit_transform(
         [query]).toarray().flatten()
@@ -218,18 +231,26 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.8, num_ep=5):
     genre_to_idx = {genre: g for g,
                     genre in enumerate(genre_to_episodes.keys())}
     predicted_genre = list(genre_to_idx)[prediction[0]]
-
     genre_scores = np.zeros((len(filtered_episodes),))
+
     for i in range(len(filtered_episodes)):
         if predicted_genre in filtered_episodes[i][1]["genres"]:
             genre_scores[i] = 1
         else:
-            genre_scores[i] = 0.8
+            genre_scores[i] = 0.9
 
     show_ranks = np.array(
         [int(episode[1]["show_rank"]) for episode in filtered_episodes]
     )
+    # show_num_reviews = [episode[1]["show_num_reviews"]
+    #                     for episode in filtered_episodes]
 
+    # type_reveiws = np.array(list(map(lambda x: True if type(
+    #     x) == int else False, show_num_reviews)))
+
+    # type_reveiws = np.argsort(type_reveiws)[:63]
+    # print(np.take(show_num_reviews, type_reveiws))
+    # print(filtered_episodes[type_reveiws[0]])
     ranked_episodes = sorted(
         ranked_episodes, key=lambda x: x["sim_score"], reverse=True)[:num_ep]
     num = len(ranked_episodes)
@@ -247,7 +268,7 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.8, num_ep=5):
 
 
 # test_query = {
-#     "query": "money",
+#     "query": "stock market",
 #     "duration": None,
 #     "genres": [],
 #     "publisher": None,
