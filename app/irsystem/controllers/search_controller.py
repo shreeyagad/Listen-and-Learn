@@ -1,3 +1,4 @@
+from nltk.corpus import wordnet
 from . import *
 from app.irsystem.models.helpers import *
 from app.irsystem.models.helpers import NumpyEncoder as NumpyEncoder
@@ -13,7 +14,6 @@ from sklearn.metrics.pairwise import cosine_similarity
 import base64
 import nltk
 nltk.download('wordnet')
-from nltk.corpus import wordnet
 
 project_name = "Listen & Learn - Podcast Recommendation Engine"
 names = [
@@ -23,7 +23,6 @@ names = [
     "Shreeya Gad: sg988",
     "Mohammed Ullah: mu83",
 ]
-
 
 # Download files from S3
 # s3 = boto3.client('s3', aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
@@ -76,10 +75,10 @@ def filter_helper(genre, duration, year, publisher):
     episodes_by_genre = genre_to_episodes[genre]
     for episode in episodes_by_genre:
         if ((duration == None or (abs(duration - episode["duration_ms"]) < 0.1 * duration)
-             )
-            and (year == None or (abs(year - int(episode["release_date"][:4]))) < 2)
-            and (publisher == None or publisher == episode["publisher"])
-            ):
+                 )
+                and (year == None or (abs(year - int(episode["release_date"][:4]))) < 2)
+                and (publisher == None or publisher == episode["publisher"])
+                ):
             filtered_episodes.append(episode)
     return filtered_episodes
 
@@ -89,7 +88,7 @@ def synonym_fn(term):
     for syn in wordnet.synsets(term):
         for l in syn.lemmas():
             synonyms.append(l.name())
-    return " ".join(list(set(synonyms))[:3])  # only 3 synonyms per term
+    return " ".join(list(set(synonyms))[1:3])  # only 2 synonyms per term
 
 
 def thesaurus_fn(query_tokens):
@@ -168,7 +167,7 @@ def get_cos_sim(query):
     tokenizer = episode_desc_vectorizer.build_tokenizer()
     query_tokens = tokenizer(query)
 
-    if len(query_tokens) <= 2:
+    if len(query_tokens) == 1:
         query = thesaurus_fn(query_tokens)
 
     query_vec_desc = episode_desc_vectorizer.fit_transform(
@@ -237,7 +236,7 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.8, num_ep=5):
         if predicted_genre in filtered_episodes[i][1]["genres"]:
             genre_scores[i] = 1
         else:
-            genre_scores[i] = 0.9
+            genre_scores[i] = 0.8
 
     show_ranks = np.array(
         [int(episode[1]["show_rank"]) for episode in filtered_episodes]
@@ -268,7 +267,7 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.8, num_ep=5):
 
 
 # test_query = {
-#     "query": "stock market",
+#     "query": "relax",
 #     "duration": None,
 #     "genres": [],
 #     "publisher": None,
