@@ -15,6 +15,7 @@ import base64
 import nltk
 nltk.download('wordnet')
 
+
 project_name = "Listen & Learn - Podcast Recommendation Engine"
 names = [
     "Kevin Cook: kjc244",
@@ -75,10 +76,10 @@ def filter_helper(genre, duration, year, publisher):
     episodes_by_genre = genre_to_episodes[genre]
     for episode in episodes_by_genre:
         if ((duration == None or (abs(duration - episode["duration_ms"]) < 0.1 * duration)
-                 )
-                    and (year == None or (abs(year - int(episode["release_date"][:4]))) < 2)
-                    and (publisher == None or publisher == episode["publisher"])
-                ):
+             )
+            and (year == None or (abs(year - int(episode["release_date"][:4]))) < 2)
+            and (publisher == None or publisher == episode["publisher"])
+            ):
             filtered_episodes.append(episode)
     return filtered_episodes
 
@@ -150,7 +151,8 @@ def get_cos_sim(query):
     else:
         for g in genre_to_episodes.keys():
             filtered_episodes += filter_helper(g, duration, year, publisher)
-    if filtered_episodes == []:  # if there are no filter episodes
+    # if there are no filter episodes
+    if filtered_episodes == [] or (query.strip() == ""):
         return None
     filtered_episodes = {
         episode_id_to_idx[episode["id"]]: episode for episode in filtered_episodes}
@@ -266,7 +268,7 @@ def get_ranked_episodes(query, name_wt=40, desc_wt=60, name_thr=0.8, num_ep=5):
 
 
 # test_query = {
-#     "query": "murder",
+#     "query": "   hi     ",
 #     "duration": None,
 #     "genres": [],
 #     "publisher": None,
