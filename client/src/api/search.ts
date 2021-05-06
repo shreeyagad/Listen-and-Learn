@@ -62,7 +62,7 @@ export const searchPodcasts = async (
   publisher: string | null,
   year: Date | null
 ): Promise<ShowData[]> => {
-  if (query.trim() == "") return [];
+  if (query.trim() === "") return [];
   const durationString = duration ? format(duration, "HH:mm") : duration;
   const yearString = year ? format(year, "yyyy") : year;
   const serverResponse = await api.post<Array<Response>>("search", {
