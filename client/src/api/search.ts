@@ -72,6 +72,7 @@ export const searchPodcasts = async (
     publisher,
     year: yearString,
   });
+  if (serverResponse.data.length === 0) return [];
   const responseObj = serverResponse.data.map((obj) => {
     return parseResponse(obj);
   });
