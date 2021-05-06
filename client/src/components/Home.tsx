@@ -52,7 +52,13 @@ export const Home = () => {
   return (
     <Container disableGutters className={classes.main}>
       <Bar barHeight={25}>
-        <Typography variant="h1">Spotify Podcast Search</Typography>
+        <Typography variant="h1">Listen and Learn</Typography>
+      </Bar>
+      <Bar barHeight={5}>
+        <Typography variant="body1">
+          Search for podcasts on Spotify based on your query, duration, genre,
+          publisher, and year preferences!
+        </Typography>
       </Bar>
       <Bar barHeight={25}>
         <Search query={query} setQuery={setQuery} />
@@ -65,13 +71,19 @@ export const Home = () => {
           clear={clearAll}
         />
       </Bar>
-      {dataResults?.map((result) => {
-        return (
-          <Bar key={result.episode_id} barHeight={25}>
-            <ResultsCard result={result} query={query} />{" "}
-          </Bar>
-        );
-      })}
+      {dataResults?.length === 0 ? (
+        <Bar barHeight={25}>
+          <Typography>No Results</Typography>
+        </Bar>
+      ) : (
+        dataResults?.map((result) => {
+          return (
+            <Bar key={result.episode_id} barHeight={25}>
+              <ResultsCard result={result} query={query} />{" "}
+            </Bar>
+          );
+        })
+      )}
     </Container>
   );
 };

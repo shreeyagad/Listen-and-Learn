@@ -107,6 +107,9 @@ export const DetailCard = ({ result, query }: DetailCardProps) => {
             <Typography style={{ padding: "0px 8px", marginTop: "8px" }}>
               {`${Math.ceil(result.duration_ms / 60000)} mins`}
             </Typography>
+            <Typography style={{ padding: "0px 8px", marginTop: "8px" }}>
+              {`Number of reviews: ${result.num_reviews}`}
+            </Typography>
           </div>
         </div>
         <div className={classes.genreBox}>
